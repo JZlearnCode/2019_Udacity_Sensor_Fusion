@@ -56,6 +56,9 @@ void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl:
 	if(color.r==-1)
 	{
 		// Select color based off of cloud intensity
+		// PCLVisualizer uses ColorHandler objects to display dustom data
+		// PointCloudColorHandlerGenericField (const PointCloudConstPtr &cloud, const std::string &field_name)
+		// Uses an user given field to extract 1D data and display the color at each point using a min-max lookup table.
 		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> intensity_distribution(cloud,"intensity");
   		viewer->addPointCloud<pcl::PointXYZI>(cloud, intensity_distribution, name);
 	}
@@ -65,7 +68,7 @@ void renderPointCloud(pcl::visualization::PCLVisualizer::Ptr& viewer, const pcl:
 		viewer->addPointCloud<pcl::PointXYZI> (cloud, name);
 		viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_COLOR, color.r, color.g, color.b, name);
 	}
-
+	//setPointCloudRenderingProperties(int property, double valuee, const std::string& id = 'cloud)
 	viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, name);
 }
 

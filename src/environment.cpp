@@ -50,10 +50,10 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     // since Lidar object could potentially be very large 
     Lidar* lidar = new Lidar(cars, 0);
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = lidar->scan();
-    renderRays(viewer, lidar->position, inputCloud);
-
+    //renderRays(viewer, lidar->position, inputCloud);
+    renderPointCloud(viewer, inputCloud, "point_cloud", Color(-1, -1, -1));
     // TODO:: Create point processor
-  
+    
 }
 
 
