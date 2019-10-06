@@ -42,20 +42,56 @@ template<typename PointT>
 std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SeparateClouds(pcl::PointIndices::Ptr inliers, typename pcl::PointCloud<PointT>::Ptr cloud) 
 {
   // TODO: Create two new point clouds, one cloud with obstacles and other with segmented plane
+    typename pcl::PointCloud<PointT>::Ptr obstCloud(new pcl::PointCloud<PointT>());
+    typename pcl::PointCloud<PointT>::Ptr planeCloud(new pcl::PointCloud<PointT>());
 
-    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult(cloud, cloud);
+    //inliers are a vector of int 
+    for(int index : inliers->indices) {
+        planeCloud->points.push_back(cloud->points[index]);
+    }
+
+    //create obstacle cloud
+    //similar method can create planeCloud too, by setting setNegative(false);
+    //setNegative: set whether the indices should be returned, or all points_except_the_indices
+    pcl::ExtractIndices<PointT> extract;
+    extract.setInputCloud(cloud);
+    extract.setIndices(inliers);
+    extract.setNegative(true);
+    //all the points that are not inliers are kept 
+    extract.filter(*obstCloud);
+
+    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult(obstCloud, planeCloud);
     return segResult;
 }
 
 
+//return pair objecct to hold segmented results for the obstacle point cloud and the road point cloud
 template<typename PointT>
 std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
 {
-    // Time segmentation process
+    // Measure how much time segmentation process will take
     auto startTime = std::chrono::steady_clock::now();
-	pcl::PointIndices::Ptr inliers;
     // TODO:: Fill in this function to find inliers for the cloud.
+    //  pcl_sample_consensus library holds SAmple Consensus (SAC) methods like RANSAC and models like planes and cylinders
+    pcl::SACSegmentation<PointT> seg;
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    seg.setOptimizeCoefficients(true);
+    seg.setModelType(pcl::SAC_RANSAC);
+    seg.setMaxIterations(maxIterations);
+    seg.setDistanceThreshold(distanceThreshold);
 
+    //Segment the largest planar component from the input cloud
+    seg.setInputCloud(cloud);
+    // The four coefficients of the plane are its Hessian Normal form ax+by+cz+d=0
+    // The model's (plane) coefficients, in this case, are the normal vector (x,y,z) and the offset
+    // The model fits a plane for roads, thus inliers are the road point cloud 
+    seg.segment(*inliers, *coefficients); 
+    if(inliers->indices.size()==0)
+    {
+        std::cout<<"Could not estimate a planar model for the given dataset." <<std::endl;
+    }
+    
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "plane segmentation took " << elapsedTime.count() << " milliseconds" << std::endl;
