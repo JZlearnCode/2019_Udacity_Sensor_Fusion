@@ -1,4 +1,4 @@
-/* \author Aaron Brown */
+/* \author Udacity */
 // Functions and structs used to render the enviroment
 // such as cars and the highway
 
@@ -21,6 +21,8 @@ void renderHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
 }
 
 int countRays = 0;
+//origin: all the rays are being cast from Lidar origin
+//cloud: point cloud generated from scan() in lidar.h
 void renderRays(pcl::visualization::PCLVisualizer::Ptr& viewer, const Vect3& origin, const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud)
 {
 

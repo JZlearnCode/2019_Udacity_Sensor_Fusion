@@ -8,7 +8,6 @@ const double pi = 3.1415;
 
 struct Ray
 {
-	
 	Vect3 origin;
 	double resolution;
 	Vect3 direction;
@@ -28,7 +27,10 @@ struct Ray
 	{}
 
 	void rayCast(const std::vector<Car>& cars, double minDistance, double maxDistance, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud, double slopeAngle, double sderr)
-	{
+	{	
+		// step 1: grows the ray by resolution until collide with ground or collide with car 
+		// step 2: after finishing grow, only keep ray < maxDistance and > minDistance
+		
 		// reset ray
 		castPosition = origin;
 		castDistance = 0;
@@ -75,13 +77,15 @@ struct Lidar
 	std::vector<Ray> rays;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
 	std::vector<Car> cars;
-	Vect3 position;
+	Vect3 position;//Lidar origin 
 	double groundSlope;
 	double minDistance;
 	double maxDistance;
 	double resoultion;
 	double sderr;
 
+	//The Lidar constructor takes two arguments: cars and the slope of the groud
+    //these arguments are necessary for modeling ray tracing 
 	Lidar(std::vector<Car> setCars, double setGroundSlope)
 		: cloud(new pcl::PointCloud<pcl::PointXYZ>()), position(0,0,2.6)
 	{
@@ -119,6 +123,7 @@ struct Lidar
 		// pcl uses boost smart pointers for cloud pointer so we don't have to worry about manually freeing the memory
 	}
 
+	//to create a pointe cloud, call the lidar scan() method
 	pcl::PointCloud<pcl::PointXYZ>::Ptr scan()
 	{
 		cloud->points.clear();

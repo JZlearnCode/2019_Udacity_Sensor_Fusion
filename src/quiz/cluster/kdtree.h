@@ -1,4 +1,4 @@
-/* \author Aaron Brown */
+/* \author Udacity */
 // Quiz on implementing kd tree
 
 #include "../../render/render.h"

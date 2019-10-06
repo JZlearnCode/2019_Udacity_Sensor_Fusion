@@ -1,4 +1,4 @@
-/* \author Aaron Brown */
+/* \author Udacity */
 // Create simple 3d highway enviroment using PCL
 // for exploring self-driving car sensors
 
@@ -46,6 +46,11 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     std::vector<Car> cars = initHighway(renderScene, viewer);
     
     // TODO:: Create lidar sensor 
+    // use "new" keyword to put Lidar object on heap
+    // since Lidar object could potentially be very large 
+    Lidar* lidar = new Lidar(cars, 0);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = lidar->scan();
+    renderRays(viewer, lidar->position, inputCloud);
 
     // TODO:: Create point processor
   
@@ -53,6 +58,9 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
 
 
 //setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
+//XY: 45 degree angle view
+//FPS: First Person Sense, gives the sensation of being in the car's driver seat
+//viewer is passed in as a reference to a pointer, thus any changes done to viewr will prercist outside function
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
 
