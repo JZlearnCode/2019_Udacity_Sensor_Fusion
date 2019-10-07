@@ -1,7 +1,7 @@
 // PCL lib Functions for processing point clouds 
 
 #include "processPointClouds.h"
-
+ 
 
 //constructor:
 template<typename PointT>
@@ -39,67 +39,82 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(ty
 
 
 template<typename PointT>
-std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SeparateClouds(pcl::PointIndices::Ptr inliers, typename pcl::PointCloud<PointT>::Ptr cloud) 
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SeparateClouds(std::unordered_set<int>& inliers, typename pcl::PointCloud<PointT>::Ptr cloud) 
 {
   // TODO: Create two new point clouds, one cloud with obstacles and other with segmented plane
     typename pcl::PointCloud<PointT>::Ptr obstCloud(new pcl::PointCloud<PointT>());
     typename pcl::PointCloud<PointT>::Ptr planeCloud(new pcl::PointCloud<PointT>());
 
-    //inliers are a vector of int 
-    for(int index : inliers->indices) {
-        planeCloud->points.push_back(cloud->points[index]);
-    }
-
-    //create obstacle cloud
-    //similar method can create planeCloud too, by setting setNegative(false);
-    //setNegative: set whether the indices should be returned, or all points_except_the_indices
-    pcl::ExtractIndices<PointT> extract;
-    extract.setInputCloud(cloud);
-    extract.setIndices(inliers);
-    extract.setNegative(true);
-    //all the points that are not inliers are kept 
-    extract.filter(*obstCloud);
+    for(int index = 0; index < cloud->points.size(); index++)
+	{
+		pcl::PointXYZ point = cloud->points[index];
+		if(inliers.count(index))
+			planeCloud->points.push_back(point);
+		else
+			obstCloud->points.push_back(point);
+	}
 
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult(obstCloud, planeCloud);
     return segResult;
 }
 
-
-//return pair objecct to hold segmented results for the obstacle point cloud and the road point cloud
 template<typename PointT>
-std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
+std::unordered_set<int> ProcessPointClouds<PointT>::Ransac3D(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol)
 {
-    // Measure how much time segmentation process will take
-    auto startTime = std::chrono::steady_clock::now();
-    // TODO:: Fill in this function to find inliers for the cloud.
-    //  pcl_sample_consensus library holds SAmple Consensus (SAC) methods like RANSAC and models like planes and cylinders
-    pcl::SACSegmentation<PointT> seg;
-    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-    seg.setOptimizeCoefficients(true);
-    seg.setModelType(pcl::SAC_RANSAC);
-    seg.setMaxIterations(maxIterations);
-    seg.setDistanceThreshold(distanceThreshold);
+	std::unordered_set<int> inliersResult;
+	srand(time(NULL));
+	auto startTime = std::chrono::steady_clock::now();
+	// TODO: Fill in this function
+	// For max iterations 
+	while(maxIterations--)
+	{
+		// Randomly sample 3 points and fit plane
+		//use unordered_set to avoid picking the same point 
+		std::unordered_set<int> inliers;
+		while(inliers.size()<3) {
+			inliers.insert(rand()%(cloud->points.size()));
+		}
+		
+		std::vector<float> x, y, z;
+        for(auto itr = inliers.begin(); itr!=inliers.end(); itr++) {
+            x.push_back(cloud->points[*itr].x);
+            y.push_back(cloud->points[*itr].y);
+            z.push_back(cloud->points[*itr].z);
+        }
 
-    //Segment the largest planar component from the input cloud
-    seg.setInputCloud(cloud);
-    // The four coefficients of the plane are its Hessian Normal form ax+by+cz+d=0
-    // The model's (plane) coefficients, in this case, are the normal vector (x,y,z) and the offset
-    // The model fits a plane for roads, thus inliers are the road point cloud 
-    seg.segment(*inliers, *coefficients); 
-    if(inliers->indices.size()==0)
-    {
-        std::cout<<"Could not estimate a planar model for the given dataset." <<std::endl;
-    }
-    
-    auto endTime = std::chrono::steady_clock::now();
-    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    std::cout << "plane segmentation took " << elapsedTime.count() << " milliseconds" << std::endl;
+		float a =  (y[1]-y[0])*(z[2]-z[0]) - (z[1]-z[0])*(y[2]-y[0]);
+		float b =  (z[1]-z[0])*(x[2]-x[0]) - (x[1]-x[0])*(z[2]-z[0]);
+		float c =  (x[1]-x[0])*(y[2]-y[0]) - (y[1]-y[0])*(x[2]-x[0]);
+        float d = -(a*x[0] + b*y[0] + c*z[0]);
 
-    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliers,cloud);
-    return segResult;
+		// Measure distance between every point and fitted line
+		// If distance is smaller than threshold count it as inlier
+		for(int index = 0; index < cloud->points.size(); index++) {
+			//if the index is already in inlier (the 2 points that's originally picked)
+			if(inliers.count(index)>0)
+				continue;
+			pcl::PointXYZ point =  cloud->points[index];
+			float x3 = point.x;
+			float y3 = point.y;
+            float z3 = point.z; 
+			//fabs: float abs
+			float d = fabs(a*x3 + b*y3 + c*z3 + d)/sqrt(a*a + b*b + c*c);
+			if(d <= distanceTol)
+				inliers.insert(index);
+		}
+
+		if(inliers.size() > inliersResult.size()) {
+			inliersResult = inliers; 
+		}
+	}
+
+	auto endTime = std::chrono::steady_clock::now();
+	auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+	std::cout<< "Ransac took " << elapsedTime.count() << "milliseconds" <<std::endl;
+	// Return indicies of inliers from fitted line with most inliers
+	return inliersResult;
+
 }
-
 
 template<typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
