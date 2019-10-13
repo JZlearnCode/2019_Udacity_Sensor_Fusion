@@ -23,6 +23,7 @@ pcl::visualization::PCLVisualizer::Ptr initScene(Box window, int zoom)
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData(std::vector<std::vector<float>> points)
+//convert point coordinates to point
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
   	
