@@ -16,6 +16,8 @@ void ProcessPointClouds<PointT>::numPoints(
   std::cout << cloud->points.size() << std::endl;
 }
 
+// filterRes defines resolution for voxel grid filtering
+// minPoint, maxPoint defines region of interest
 template <typename PointT>
 typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
     typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes,
@@ -25,6 +27,47 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
 
   // TODO:: Fill in the function to do voxel grid point reduction and region
   // based filtering
+
+  // Create the filtering object: downsample the datset using a leaf size of .2m
+  pcl::VoxelGrid<PointT> vg;
+  typename pcl::PointCloud<PointT>::Ptr cloudFiltered(
+      new pcl::PointCloud<PointT>);
+
+  vg.setInputCloud(cloud);
+  vg.setLeafSize(filterRes, filterRes,
+                 filterRes);  // set resolution in x, y, z direction
+  vg.filter(*cloudFiltered);
+
+  // Region of interest filtering
+  typename pcl::PointCloud<PointT>::Ptr cloudRegion(
+      new pcl::PointCloud<PointT>);
+  // CropBox(bool extract_removed_indices), set to true if you want to be able
+  // to extarct the indices of points beling removed
+  pcl::CropBox<PointT> region(true);
+  region.setMin(minPoint);
+  region.setMax(maxPoint);
+  region.setInputCloud(cloudFiltered);
+  region.filter(*cloudRegion);
+
+  // remove the points caused by lidar ray hitting root of the car
+  std::vector<int> indices;
+  pcl::CropBox<PointT> roof(true);
+  roof.setMin(Eigen::Vector4f(-1.5, -1.7, -1, 1));
+  roof.setMax(Eigen::Vector4f(2.6, 1.7, -0.4, 1));
+  roof.setInputCloud(cloudRegion);
+  // filter can return indices of points within the defined region (close to
+  // roof of car)
+  roof.filter(indices);
+
+  pcl::PointIndices::Ptr inliers{new pcl::PointIndices};
+  for (int point : indices) {
+    inliers->indices.push_back(point);
+  }
+  pcl::ExtractIndices<PointT> extract;
+  extract.setInputCloud(cloudRegion);
+  extract.setIndices(inliers);
+  extract.setNegative(true);
+  extract.filter(*cloudRegion);
 
   auto endTime = std::chrono::steady_clock::now();
   auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(
