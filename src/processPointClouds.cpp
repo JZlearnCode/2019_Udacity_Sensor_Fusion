@@ -52,8 +52,8 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
   // remove the points caused by lidar ray hitting root of the car
   std::vector<int> indices;
   pcl::CropBox<PointT> roof(true);
-  roof.setMin(Eigen::Vector4f(-1.5, -1.7, -1, 1));
-  roof.setMax(Eigen::Vector4f(2.6, 1.7, -0.4, 1));
+  roof.setMin(Eigen::Vector4f(-1.5, -1.7, -1, 0));
+  roof.setMax(Eigen::Vector4f(2.6, 1.7, -0.4, 0));
   roof.setInputCloud(cloudRegion);
   // filter can return indices of points within the defined region (close to
   // roof of car)
@@ -92,7 +92,7 @@ ProcessPointClouds<PointT>::SeparateClouds(
       new pcl::PointCloud<PointT>());
 
   for (int index = 0; index < cloud->points.size(); index++) {
-    pcl::PointXYZ point = cloud->points[index];
+    PointT point = cloud->points[index];
     if (inliers.count(index))
       planeCloud->points.push_back(point);
     else
@@ -140,7 +140,7 @@ std::unordered_set<int> ProcessPointClouds<PointT>::Ransac3D(
       // if the index is already in inlier (the 2 points that's originally
       // picked)
       if (inliers.count(index) > 0) continue;
-      pcl::PointXYZ point = cloud->points[index];
+      PointT point = cloud->points[index];
       float x3 = point.x;
       float y3 = point.y;
       float z3 = point.z;
@@ -257,6 +257,9 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::loadPcd(
 template <typename PointT>
 std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::streamPcd(
     std::string dataPath) {
+  // directory_iterator() constructs the end iterator
+  // directory_iterator(directory p) constructs the first entry in the directory
+  // p, if there is no such directory, returns the end iterator
   std::vector<boost::filesystem::path> paths(
       boost::filesystem::directory_iterator{dataPath},
       boost::filesystem::directory_iterator{});
