@@ -145,13 +145,12 @@ std::unordered_set<int> ProcessPointClouds<PointT>::Ransac3D(
       float y3 = point.y;
       float z3 = point.z;
       // fabs: float abs
-      float d =
+      float dist =
           fabs(a * x3 + b * y3 + c * z3 + d) / sqrt(a * a + b * b + c * c);
-      if (d <= distanceTol) inliers.insert(index);
-    }
-
-    if (inliers.size() > inliersResult.size()) {
-      inliersResult = inliers;
+      if (dist <= distanceTol) inliers.insert(index);
+      if (inliers.size() > inliersResult.size()) {
+        inliersResult = inliers;
+      }
     }
   }
 
