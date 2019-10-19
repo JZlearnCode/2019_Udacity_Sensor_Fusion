@@ -48,20 +48,20 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
   renderPointCloud(viewer, segmentCloud.first, "obstCloud", Color(1, 0, 0));
   renderPointCloud(viewer, segmentCloud.second, "planeCloud", Color(0, 1, 0));
-  // std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters =
-  //     pointProcessorI->Clustering(segmentCloud.first, 0.5, 10, 150);
+  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters =
+      pointProcessorI->Clustering(segmentCloud.first, 0.5, 10, 150);
 
-  // int clusterId = 0;
-  // std::vector<Color> colors = {Color(1, 0, 0), Color(1, 1, 0), Color(0, 0,
-  // 1)}; for (pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : cloudClusters) {
-  //   std::cout << "cluster size";
-  //   pointProcessorI->numPoints(cluster);
-  //   renderPointCloud(viewer, cluster, "obsCloud" + std::to_string(clusterId),
-  //                    colors[clusterId % colors.size()]);
-  //   Box box = pointProcessorI->BoundingBox(cluster);
-  //   renderBox(viewer, box, clusterId);
-  //   ++clusterId;
-  // }
+  int clusterId = 0;
+  std::vector<Color> colors = {Color(1, 0, 0), Color(1, 1, 0), Color(0, 0, 1)};
+  for (pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : cloudClusters) {
+    std::cout << "cluster size";
+    pointProcessorI->numPoints(cluster);
+    renderPointCloud(viewer, cluster, "obsCloud" + std::to_string(clusterId),
+                     colors[clusterId % colors.size()]);
+    Box box = pointProcessorI->BoundingBox(cluster);
+    renderBox(viewer, box, clusterId);
+    ++clusterId;
+  }
 }
 
 // setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
