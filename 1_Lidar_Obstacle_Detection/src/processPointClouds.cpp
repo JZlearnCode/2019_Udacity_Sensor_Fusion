@@ -1,5 +1,4 @@
-// PCL lib Functions for processing point clouds
-
+// Functions for processing point clouds
 #include "processPointClouds.h"
 
 // constructor:
@@ -10,12 +9,7 @@ ProcessPointClouds<PointT>::ProcessPointClouds() {}
 template <typename PointT>
 ProcessPointClouds<PointT>::~ProcessPointClouds() {}
 
-template <typename PointT>
-void ProcessPointClouds<PointT>::numPoints(
-    typename pcl::PointCloud<PointT>::Ptr cloud) {
-  std::cout << cloud->points.size() << std::endl;
-}
-
+// Performs voxel grid point reduction and region based filtering
 // filterRes defines resolution for voxel grid filtering
 // minPoint, maxPoint defines region of interest
 template <typename PointT>
@@ -24,9 +18,6 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
     Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint) {
   // Time segmentation process
   auto startTime = std::chrono::steady_clock::now();
-
-  // TODO:: Fill in the function to do voxel grid point reduction and region
-  // based filtering
 
   // Create the filtering object: downsample the datset using a leaf size of .2m
   pcl::VoxelGrid<PointT> vg;
@@ -228,14 +219,6 @@ Box ProcessPointClouds<PointT>::BoundingBox(
   box.z_max = maxPoint.z;
 
   return box;
-}
-
-template <typename PointT>
-void ProcessPointClouds<PointT>::savePcd(
-    typename pcl::PointCloud<PointT>::Ptr cloud, std::string file) {
-  pcl::io::savePCDFileASCII(file, *cloud);
-  std::cerr << "Saved " << cloud->points.size() << " data points to " + file
-            << std::endl;
 }
 
 template <typename PointT>
