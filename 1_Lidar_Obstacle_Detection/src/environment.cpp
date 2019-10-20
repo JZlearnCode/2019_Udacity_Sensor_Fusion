@@ -52,7 +52,8 @@ void RunDetector(pcl::visualization::PCLVisualizer::Ptr& viewer,
   std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> obstacle_clusters =
       point_processor->EuclideanClustering(separted_clouds.first, 0.5, 10, 150);
 
-  // Step 4. Display detection result by giving a bounding box for each obstacle
+  // Step 4. Display detection result by giving a bounding box for each
+  // obstacle
   DisplayDetectionResult(viewer, point_processor, obstacle_clusters);
 }
 
@@ -83,6 +84,7 @@ int main() {
     input_cloud = point_processor.LoadPcd((*streamIterator).string());
     RunDetector(viewer, &point_processor, input_cloud);
     streamIterator++;
+
     // loop back to the first file if finished
     if (streamIterator == stream.end()) {
       streamIterator = stream.begin();
