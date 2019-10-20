@@ -55,7 +55,8 @@
         "typeinfo": "cpp",
         "string": "cpp",
         "core": "cpp",
-        "numericaldiff": "cpp"
+        "numericaldiff": "cpp",
+        "iterator": "cpp"
     },
     "C_Cpp.clang_format_fallbackStyle": "Google",
     "editor.fontSize": 15,

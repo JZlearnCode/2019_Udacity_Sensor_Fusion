@@ -18,8 +18,8 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include "cluster.cpp"
 #include "render/box.h"
-
 template <typename PointT>
 class ProcessPointClouds {
  public:

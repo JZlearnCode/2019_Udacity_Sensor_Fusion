@@ -51,6 +51,7 @@ void RunDetector(pcl::visualization::PCLVisualizer::Ptr& viewer,
   // Step 3.Obstacle detection using KD tree and euclidean clustering
   std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> obstacle_clusters =
       point_processor->Clustering(separted_clouds.first, 0.5, 10, 150);
+
   // Step 4. Display detection result by giving a bounding box for each obstacle
   DisplayDetectionResult(viewer, point_processor, obstacle_clusters);
 }
