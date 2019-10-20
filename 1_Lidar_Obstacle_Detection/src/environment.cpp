@@ -14,10 +14,10 @@ void DisplayDetectionResult(
   int clusterId = 0;
   std::vector<Color> colors = {Color(1, 0, 0), Color(1, 1, 0), Color(0, 0, 1)};
   for (pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : obstacle_clusters) {
-    renderPointCloud(viewer, cluster, "obsCloud" + std::to_string(clusterId),
+    RenderPointCloud(viewer, cluster, "obsCloud" + std::to_string(clusterId),
                      colors[clusterId % colors.size()]);
     Box box = point_processor->BoundingBox(cluster);
-    renderBox(viewer, box, clusterId);
+    RenderBox(viewer, box, clusterId);
     ++clusterId;
   }
 }
@@ -43,9 +43,9 @@ void RunDetector(pcl::visualization::PCLVisualizer::Ptr& viewer,
   std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr,
             pcl::PointCloud<pcl::PointXYZI>::Ptr>
       separted_clouds = point_processor->SeparateClouds(inliers, input_cloud);
-  renderPointCloud(viewer, separted_clouds.first, "obstacleCloud",
+  RenderPointCloud(viewer, separted_clouds.first, "obstacleCloud",
                    Color(1, 0, 0));
-  renderPointCloud(viewer, separted_clouds.second, "planeCloud",
+  RenderPointCloud(viewer, separted_clouds.second, "planeCloud",
                    Color(0, 1, 0));
 
   // Step 3.Obstacle detection using KD tree and euclidean clustering
