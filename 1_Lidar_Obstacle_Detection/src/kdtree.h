@@ -2,6 +2,8 @@
 Implementation of KD tree in 3D space for point cloud
 Author : Jin Zhu
 */
+#ifndef KDTREE_H_
+#define KDTREE_H_
 #include <math.h>
 
 // Structure to represent node of kd tree
@@ -94,4 +96,10 @@ struct KdTree {
     SearchHelper(target, root, 0, distance_tolerance, ids);
     return ids;
   }
+
+  std::vector<int> Search(pcl::PointXYZI pcl_point, float distance_tolerance) {
+    std::vector<float> target = {pcl_point.x, pcl_point.y, pcl_point.z};
+    return Search(target, distance_tolerance);
+  }
 };
+#endif

@@ -18,7 +18,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include "cluster.cpp"
+#include "kdtree.h"
 #include "render/box.h"
 template <typename PointT>
 class ProcessPointClouds {
@@ -76,6 +76,14 @@ class ProcessPointClouds {
 
   // Obtain paths to all pcd files under directory data_path
   std::vector<boost::filesystem::path> StreamPcd(std::string data_path);
+
+  void GrowCluster(int index, typename pcl::PointCloud<PointT>::Ptr cloud,
+                   std::vector<int>& cluster_idx, std::vector<bool>& processed,
+                   KdTree* tree, float distance_tolerance);
+
+  std::vector<typename pcl::PointCloud<PointT>::Ptr> EuclideanClustering(
+      typename pcl::PointCloud<PointT>::Ptr cloud, float cluster_tolerance,
+      int min_cluster_size, int max_cluster_size);
 
  private:
   // Downsample point cloud
