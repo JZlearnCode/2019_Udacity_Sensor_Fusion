@@ -183,7 +183,8 @@ ProcessPointClouds<PointT>::EuclideanClustering(
   for (int i = 0; i < num_points; i++) {
     if (!processed[i]) {
       std::vector<int> cluster_idx;
-      typename pcl::PointCloud<PointT>::Ptr cluster;
+      typename pcl::PointCloud<PointT>::Ptr cluster(
+          new pcl::PointCloud<PointT>());
       GrowCluster(i, cloud, cluster_idx, processed, tree, cluster_tolerance);
       if (cluster_idx.size() >= min_cluster_size &&
           cluster_idx.size() <= max_cluster_size) {

@@ -69,8 +69,9 @@ int main() {
   ProcessPointClouds<pcl::PointXYZI> point_processor;
   pcl::PointCloud<pcl::PointXYZI>::Ptr input_cloud;
   // stream is a vector of chronologically ordered vector pcd files
+  std::string dir = std::getenv("PWD");
   std::vector<boost::filesystem::path> stream =
-      point_processor.StreamPcd("../data/pcd_example");
+      point_processor.StreamPcd(dir + "/../data/pcd_example");
   auto streamIterator = stream.begin();
 
   // Run detection
