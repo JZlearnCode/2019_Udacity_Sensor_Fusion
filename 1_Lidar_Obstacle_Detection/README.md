@@ -17,6 +17,10 @@ $> ./environment
 ## Step 1. Downsample point cloud by voxel grid filtering and region of interest filtering
 Filtering took 7 ms per frame 
 ### Voxel grid filtering
+Voxel grid filtering creates a cubic grid and filter the cloud by only
+leaving a single point per voxel cube, so the larger the cube length
+the lower the resolution of the point cloud.
+
 Before vs after 
 ### Region of interest filtering 
 Before vs after 
@@ -24,6 +28,7 @@ Before vs after
 Speed of preprocessing:  
 ## Step 2. Remove ground plane using RANSAC
 #### RANSAC 
+RANSAC took 170-200 ms per frame 
 #### Plane math 
 Speed of RANSAC: fps
 Speed of removing ground: fps
