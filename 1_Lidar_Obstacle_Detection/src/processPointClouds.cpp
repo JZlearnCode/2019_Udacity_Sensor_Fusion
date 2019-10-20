@@ -9,35 +9,44 @@ ProcessPointClouds<PointT>::ProcessPointClouds() {}
 template <typename PointT>
 ProcessPointClouds<PointT>::~ProcessPointClouds() {}
 
+template <typename PointT>
+void ProcessPointClouds<PointT>::VoxelFilter(
+    typename pcl::PointCloud<PointT>::Ptr cloud, float filter_resolution,
+    typename pcl::PointCloud<PointT>::Ptr cloud_filtered) {
+  // Create the filtering object: downsample the datset
+  pcl::VoxelGrid<PointT> vg;
+  vg.setInputCloud(cloud);
+  // set resolution in x, y, z direction
+  vg.setLeafSize(filter_resolution, filter_resolution, filter_resolution);
+  vg.filter(*cloud_filtered);
+}
+
+template <typename PointT>
+void ProcessPointClouds<PointT>::RegionOfInterestFilter(
+    typename pcl::PointCloud<PointT>::Ptr cloud, Eigen::Vector4f min_point,
+    Eigen::Vector4f max_point) {}
+
 // Performs voxel grid point reduction and region based filtering
-// filterRes defines resolution for voxel grid filtering
-// minPoint, maxPoint defines region of interest
+// filter_resolution defines resolution for voxel grid filtering
+// min_point, max_point defines region of interest
 template <typename PointT>
 typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
-    typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes,
-    Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint) {
+    typename pcl::PointCloud<PointT>::Ptr cloud, float filter_resolution,
+    Eigen::Vector4f min_point, Eigen::Vector4f max_point) {
   // Time segmentation process
   auto startTime = std::chrono::steady_clock::now();
-
-  // Create the filtering object: downsample the datset using a leaf size of .2m
-  pcl::VoxelGrid<PointT> vg;
-  typename pcl::PointCloud<PointT>::Ptr cloudFiltered(
+  typename pcl::PointCloud<PointT>::Ptr cloud_filtered(
       new pcl::PointCloud<PointT>);
-
-  vg.setInputCloud(cloud);
-  vg.setLeafSize(filterRes, filterRes,
-                 filterRes);  // set resolution in x, y, z direction
-  vg.filter(*cloudFiltered);
-
+  VoxelFilter(cloud, filter_resolution, cloud_filtered);
   // Region of interest filtering
   typename pcl::PointCloud<PointT>::Ptr cloudRegion(
       new pcl::PointCloud<PointT>);
   // CropBox(bool extract_removed_indices), set to true if you want to be able
   // to extarct the indices of points beling removed
   pcl::CropBox<PointT> region(true);
-  region.setMin(minPoint);
-  region.setMax(maxPoint);
-  region.setInputCloud(cloudFiltered);
+  region.setMin(min_point);
+  region.setMax(max_point);
+  region.setInputCloud(cloud_filtered);
   region.filter(*cloudRegion);
 
   // remove the points caused by lidar ray hitting root of the car
@@ -207,16 +216,16 @@ template <typename PointT>
 Box ProcessPointClouds<PointT>::BoundingBox(
     typename pcl::PointCloud<PointT>::Ptr cluster) {
   // Find bounding box for one of the clusters
-  PointT minPoint, maxPoint;
-  pcl::getMinMax3D(*cluster, minPoint, maxPoint);
+  PointT min_point, max_point;
+  pcl::getMinMax3D(*cluster, min_point, max_point);
 
   Box box;
-  box.x_min = minPoint.x;
-  box.y_min = minPoint.y;
-  box.z_min = minPoint.z;
-  box.x_max = maxPoint.x;
-  box.y_max = maxPoint.y;
-  box.z_max = maxPoint.z;
+  box.x_min = min_point.x;
+  box.y_min = min_point.y;
+  box.z_min = min_point.z;
+  box.x_max = max_point.x;
+  box.y_max = max_point.y;
+  box.z_max = max_point.z;
 
   return box;
 }

@@ -60,4 +60,5 @@
     "C_Cpp.clang_format_fallbackStyle": "Google",
     "editor.fontSize": 15,
     "editor.formatOnSave": true,
+    "C_Cpp.errorSquiggles": "Enabled",
 }
