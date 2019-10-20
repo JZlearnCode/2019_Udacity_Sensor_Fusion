@@ -56,8 +56,9 @@ class ProcessPointClouds {
  private:
   void VoxelFilter(typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes,
                    typename pcl::PointCloud<PointT>::Ptr cloud_filtered);
-  void RegionOfInterestFilter(typename pcl::PointCloud<PointT>::Ptr cloud,
-                              Eigen::Vector4f min_point,
-                              Eigen::Vector4f max_point);
+  void RegionOfInterestFilter(
+      typename pcl::PointCloud<PointT>::Ptr cloud, Eigen::Vector4f min_point,
+      Eigen::Vector4f max_point,
+      typename pcl::PointCloud<PointT>::Ptr cloud_filtered);
 };
 #endif /* PROCESSPOINTCLOUDS_H_ */

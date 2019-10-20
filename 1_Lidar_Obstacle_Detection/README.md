@@ -15,6 +15,7 @@ $> ./environment
 
 # Implementation
 ## Step 1. Downsample point cloud by voxel grid filtering and region of interest filtering
+Filtering took 7 ms per frame 
 ### Voxel grid filtering
 Before vs after 
 ### Region of interest filtering 

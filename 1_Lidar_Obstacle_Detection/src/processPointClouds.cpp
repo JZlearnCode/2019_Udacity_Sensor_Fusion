@@ -24,58 +24,53 @@ void ProcessPointClouds<PointT>::VoxelFilter(
 template <typename PointT>
 void ProcessPointClouds<PointT>::RegionOfInterestFilter(
     typename pcl::PointCloud<PointT>::Ptr cloud, Eigen::Vector4f min_point,
-    Eigen::Vector4f max_point) {}
-
-// Performs voxel grid point reduction and region based filtering
-// filter_resolution defines resolution for voxel grid filtering
-// min_point, max_point defines region of interest
-template <typename PointT>
-typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
-    typename pcl::PointCloud<PointT>::Ptr cloud, float filter_resolution,
-    Eigen::Vector4f min_point, Eigen::Vector4f max_point) {
-  // Time segmentation process
-  auto startTime = std::chrono::steady_clock::now();
-  typename pcl::PointCloud<PointT>::Ptr cloud_filtered(
-      new pcl::PointCloud<PointT>);
-  VoxelFilter(cloud, filter_resolution, cloud_filtered);
-  // Region of interest filtering
-  typename pcl::PointCloud<PointT>::Ptr cloudRegion(
-      new pcl::PointCloud<PointT>);
+    Eigen::Vector4f max_point,
+    typename pcl::PointCloud<PointT>::Ptr cloud_filtered) {
   // CropBox(bool extract_removed_indices), set to true if you want to be able
   // to extarct the indices of points beling removed
   pcl::CropBox<PointT> region(true);
   region.setMin(min_point);
   region.setMax(max_point);
-  region.setInputCloud(cloud_filtered);
-  region.filter(*cloudRegion);
+  region.setInputCloud(cloud);
+  region.filter(*cloud_filtered);
 
   // remove the points caused by lidar ray hitting root of the car
   std::vector<int> indices;
   pcl::CropBox<PointT> roof(true);
   roof.setMin(Eigen::Vector4f(-1.5, -1.7, -1, 0));
   roof.setMax(Eigen::Vector4f(2.6, 1.7, -0.4, 0));
-  roof.setInputCloud(cloudRegion);
+  roof.setInputCloud(cloud_filtered);
   // filter can return indices of points within the defined region (close to
   // roof of car)
   roof.filter(indices);
-
   pcl::PointIndices::Ptr inliers{new pcl::PointIndices};
   for (int point : indices) {
     inliers->indices.push_back(point);
   }
   pcl::ExtractIndices<PointT> extract;
-  extract.setInputCloud(cloudRegion);
+  extract.setInputCloud(cloud_filtered);
   extract.setIndices(inliers);
   extract.setNegative(true);
-  extract.filter(*cloudRegion);
+  extract.filter(*cloud_filtered);
+}
 
-  auto endTime = std::chrono::steady_clock::now();
-  auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-      endTime - startTime);
-  std::cout << "filtering took " << elapsedTime.count() << " milliseconds"
+template <typename PointT>
+typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(
+    typename pcl::PointCloud<PointT>::Ptr cloud, float filter_resolution,
+    Eigen::Vector4f min_point, Eigen::Vector4f max_point) {
+  // Time segmentation process
+  auto start_time = std::chrono::steady_clock::now();
+  typename pcl::PointCloud<PointT>::Ptr cloud_filtered(
+      new pcl::PointCloud<PointT>);
+  VoxelFilter(cloud, filter_resolution, cloud_filtered);
+  // Region of interest filtering
+  RegionOfInterestFilter(cloud_filtered, min_point, max_point, cloud_filtered);
+  auto end_time = std::chrono::steady_clock::now();
+  auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+      end_time - start_time);
+  std::cout << "filtering took " << elapsed_time.count() << " milliseconds"
             << std::endl;
-
-  return cloudRegion;
+  return cloud_filtered;
 }
 
 template <typename PointT>
@@ -84,8 +79,8 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr,
 ProcessPointClouds<PointT>::SeparateClouds(
     std::unordered_set<int>& inliers,
     typename pcl::PointCloud<PointT>::Ptr cloud) {
-  // TODO: Create two new point clouds, one cloud with obstacles and other with
-  // segmented plane
+  // TODO: Create two new point clouds, one cloud with obstacles and other
+  // with segmented plane
   typename pcl::PointCloud<PointT>::Ptr obstCloud(
       new pcl::PointCloud<PointT>());
   typename pcl::PointCloud<PointT>::Ptr planeCloud(
@@ -249,8 +244,8 @@ template <typename PointT>
 std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::streamPcd(
     std::string dataPath) {
   // directory_iterator() constructs the end iterator
-  // directory_iterator(directory p) constructs the first entry in the directory
-  // p, if there is no such directory, returns the end iterator
+  // directory_iterator(directory p) constructs the first entry in the
+  // directory p, if there is no such directory, returns the end iterator
   std::vector<boost::filesystem::path> paths(
       boost::filesystem::directory_iterator{dataPath},
       boost::filesystem::directory_iterator{});
