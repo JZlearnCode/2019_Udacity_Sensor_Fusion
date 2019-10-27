@@ -1,6 +1,6 @@
 /*
 Load lidar point cloud and perform object detection.
-Author: Jin Zhu
+Author: JZ
 */
 #include "processPointClouds.cpp"
 #include "processPointClouds.h"

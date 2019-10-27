@@ -1,6 +1,6 @@
 /*
 Implementation of KD tree in 3D space for point cloud
-Author : Jin Zhu
+Author : JZ
 */
 #ifndef KDTREE_H_
 #define KDTREE_H_
