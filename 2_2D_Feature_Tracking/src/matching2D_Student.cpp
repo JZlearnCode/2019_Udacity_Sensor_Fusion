@@ -59,6 +59,26 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img,
        << " ms" << endl;
 }
 
+// FAST, BRISK, ORB, AKAZE, SIFT
+void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img,
+                        std::string detectorType) {
+  cv::Ptr<cv::FeatureDetector> detector;
+  if (detectorType == "FAST") {
+    detector = cv::FastFeatureDetector::create();
+  } else if (detectorType == "BRISK") {
+    detector = cv::BRISK::create();
+  } else if (detectorType == "ORB") {
+    detector = cv::ORB::create();
+  } else if (detectorType == "AKAZE") {
+    detector = cv::AKAZE::create();
+  } else if (detectorType == "SIFT") {
+    detector = cv::xfeatures2d::SIFT::create();
+  } else {
+    std::cerr << "Invalid Detector Type: " << detectorType << std::endl;
+    return;
+  }
+  detector->detect(img, keypoints);
+}
 // For each pixel (x, y), it calculates a 2x2 gradient covariance matrix M(x, y)
 // over a "blocksize x blocksize" neighborhood
 void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img) {

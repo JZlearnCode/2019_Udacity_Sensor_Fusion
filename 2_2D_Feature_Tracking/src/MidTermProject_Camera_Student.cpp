@@ -13,7 +13,6 @@
 #include <opencv2/xfeatures2d/nonfree.hpp>
 #include <sstream>
 #include <vector>
-
 #include "dataStructures.h"
 #include "matching2D.hpp"
 
@@ -34,8 +33,8 @@ int main(int argc, const char *argv[]) {
   int imgStartIndex = 0;  // first file index to load (assumes Lidar and camera
                           // names have identical naming convention)
   int imgEndIndex = 9;    // last file index to load
-  int imgFillWidth =
-      4;  // no. of digits which make up the file index (e.g. img-0001.png)
+  // no. of digits which make up the file index (e.g. img-0001.png)
+  int imgFillWidth = 4;
 
   // misc
   int dataBufferSize = 2;  // no. of images which are held in memory (ring
@@ -75,9 +74,8 @@ int main(int argc, const char *argv[]) {
     /* DETECT IMAGE KEYPOINTS */
 
     // extract 2D keypoints from current image
-    vector<cv::KeyPoint>
-        keypoints;  // create empty feature list for current image
-    string detectorType = "HARRIS";  //#"SHITOMASI";
+    vector<cv::KeyPoint> keypoints;
+    string detectorType = "SIFT";  //#"SHITOMASI";
 
     // string-based selection of feature detection
     // HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
@@ -85,9 +83,8 @@ int main(int argc, const char *argv[]) {
       detKeypointsShiTomasi(keypoints, imgGray);
     } else if (detectorType == "HARRIS") {
       detKeypointsHarris(keypoints, imgGray);
-      std::cout << "harris!!!!!!!!" << std::endl;
     } else {
-      //...
+      detKeypointsModern(keypoints, imgGray, detectorType);
     }
     //// EOF STUDENT ASSIGNMENT
 
@@ -98,7 +95,14 @@ int main(int argc, const char *argv[]) {
     bool bFocusOnVehicle = true;
     cv::Rect vehicleRect(535, 180, 180, 150);
     if (bFocusOnVehicle) {
-      // ...
+      auto it = keypoints.begin();
+      while (it != keypoints.end()) {
+        if (vehicleRect.contains(it->pt)) {
+          it++;
+        } else {
+          keypoints.erase(it);
+        }
+      }
     }
 
     //// EOF STUDENT ASSIGNMENT
@@ -107,10 +111,9 @@ int main(int argc, const char *argv[]) {
     bool bLimitKpts = false;
     if (bLimitKpts) {
       int maxKeypoints = 50;
-
-      if (detectorType.compare("SHITOMASI") ==
-          0) {  // there is no response info, so keep the first 50 as they are
-                // sorted in descending quality order
+      // there is no response info, so keep the first 50 as they are
+      // sorted in descending quality order
+      if (detectorType.compare("SHITOMASI") == 0) {
         keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
       }
       cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
@@ -139,10 +142,8 @@ int main(int argc, const char *argv[]) {
     (dataBuffer.end() - 1)->descriptors = descriptors;
 
     cout << "#3 : EXTRACT DESCRIPTORS done" << endl;
-
-    if (dataBuffer.size() >
-        1)  // wait until at least two images have been processed
-    {
+    // wait until at least two images have been processed
+    if (dataBuffer.size() > 1) {
       /* MATCH KEYPOINT DESCRIPTORS */
 
       vector<cv::DMatch> matches;
