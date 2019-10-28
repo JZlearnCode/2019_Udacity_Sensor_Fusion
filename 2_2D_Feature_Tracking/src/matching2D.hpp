@@ -18,6 +18,7 @@
 
 #include "dataStructures.h"
 
+bool compareKeypointsHarris(cv::KeyPoint p1, cv::KeyPoint p2);
 void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img);
 void detKeypointsShiTomasi(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img);
 void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img,

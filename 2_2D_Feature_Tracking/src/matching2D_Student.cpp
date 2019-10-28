@@ -79,6 +79,10 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img,
   }
   detector->detect(img, keypoints);
 }
+
+bool compareKeypointsHarris(cv::KeyPoint p1, cv::KeyPoint p2) {
+  return (p1.response > p2.response);
+}
 // For each pixel (x, y), it calculates a 2x2 gradient covariance matrix M(x, y)
 // over a "blocksize x blocksize" neighborhood
 void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img) {
@@ -87,7 +91,7 @@ void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img) {
   int kernelSize = 3;
   // Harris corner free parmeter
   double k = 0.04;
-  int thresh = 150;
+  float thresh = 100;
   cv::Mat corner_img;
   cv::cornerHarris(img, corner_img, blockSize, kernelSize, k,
                    cv::BORDER_DEFAULT);
@@ -95,15 +99,19 @@ void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img) {
   // add corners to result vector
   for (int row = 0; row < corner_img.rows; row++) {
     for (int col = 0; col < corner_img.cols; col++) {
-      if ((int)corner_img.at<float>(row, col) > thresh) {
+      float response = corner_img.at<float>(row, col);
+      if (response > thresh) {
         cv::KeyPoint corner_point;
         corner_point.pt = cv::Point2f(col, row);
         // diameter of the meaningful keypoint neighborhood
         corner_point.size = blockSize;
+        corner_point.response = response;
         keypoints.push_back(corner_point);
       }
     }
   }
+  // sort by corner response
+  sort(keypoints.begin(), keypoints.end(), compareKeypointsHarris);
 }
 // Detect keypoints in image using the traditional Shi-Thomasi detector
 void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img) {

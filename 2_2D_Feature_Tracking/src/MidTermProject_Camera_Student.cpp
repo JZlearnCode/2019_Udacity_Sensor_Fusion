@@ -75,7 +75,7 @@ int main(int argc, const char *argv[]) {
 
     // extract 2D keypoints from current image
     vector<cv::KeyPoint> keypoints;
-    string detectorType = "SIFT";  //#"SHITOMASI";
+    string detectorType = "HARRIS";  //#"SHITOMASI";
 
     // string-based selection of feature detection
     // HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
@@ -104,7 +104,7 @@ int main(int argc, const char *argv[]) {
         }
       }
     }
-
+    std::cout << "size--------" << keypoints.size() << std::endl;
     //// EOF STUDENT ASSIGNMENT
 
     // optional : limit number of keypoints (helpful for debugging and learning)
@@ -113,9 +113,8 @@ int main(int argc, const char *argv[]) {
       int maxKeypoints = 50;
       // there is no response info, so keep the first 50 as they are
       // sorted in descending quality order
-      if (detectorType.compare("SHITOMASI") == 0) {
-        keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
-      }
+      keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
+
       cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
       cout << " NOTE: Keypoints have been limited!" << endl;
     }
