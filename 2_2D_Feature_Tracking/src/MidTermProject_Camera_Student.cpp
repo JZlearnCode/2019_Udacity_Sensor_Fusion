@@ -34,7 +34,13 @@ int main(int argc, const char *argv[]) {
   // BRIEF, ORB, FREAK, AKAZE, SIFT
   string descriptorType = argv[2];
   std::cout << "Feature_detector_name: " << detectorType << std::endl;
-  std::cout << "Feature_descriptor_name" << detectorType << std::endl;
+  std::cout << "Feature_descriptor_name: " << descriptorType << std::endl;
+  if ((detectorType == "AKAZE" || descriptorType == "AKAZE") &&
+      detectorType != descriptorType) {
+    std::cerr << "AKAZE detector can only be used with AKAZE descriptor"
+              << std::endl;
+    return 1;
+  }
   /* INIT VARIABLES AND DATA STRUCTURES */
 
   // data location
