@@ -13,24 +13,45 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource,
   // configure matcher
   bool crossCheck = false;
   cv::Ptr<cv::DescriptorMatcher> matcher;
-
-  if (matcherType.compare("MAT_BF") == 0) {
-    int normType = cv::NORM_HAMMING;
+  // cv2.NORM_L2: good for SIFT, SURF etc
+  // cv2.NORM_HAMMING: binary string based descriptors like ORB, BRIEF, BRISK
+  if (matcherType == "MAT_BF") {
+    int normType;
+    if (descriptorType == "DES_HOG") {
+      normType = cv::NORM_L2;
+    } else if (descriptorType == "DES_BINARY") {
+      normType = cv::NORM_HAMMING;
+    } else {
+      std::cerr << "Wrong descriptorType" << std::endl;
+    }
     matcher = cv::BFMatcher::create(normType, crossCheck);
-  } else if (matcherType.compare("MAT_FLANN") == 0) {
-    // ...
+  }
+
+  else if (matcherType == "MAT_FLANN") {
+    matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
   }
 
   // perform matching task
   if (selectorType.compare("SEL_NN") == 0) {  // nearest neighbor (best match)
-
     matcher->match(
         descSource, descRef,
         matches);  // Finds the best match for each descriptor in desc1
-  } else if (selectorType.compare("SEL_KNN") ==
-             0) {  // k nearest neighbors (k=2)
-
-    // ...
+  }
+  // k nearest neighbors (k=2)
+  else if (selectorType.compare("SEL_KNN") == 0) {
+    std::vector<std::vector<cv::DMatch> > knn_matches;
+    matcher->knnMatch(descSource, descRef, knn_matches, 2);
+    //-- Filter matches using the Lowe's ratio test
+    // The probability that a match is correct can be determined by taking the
+    // ratio of distance from the closest neighbor to the distance of the second
+    // closest
+    const float ratio_thresh = 0.7f;
+    for (size_t i = 0; i < knn_matches.size(); i++) {
+      if (knn_matches[i][0].distance <
+          ratio_thresh * knn_matches[i][1].distance) {
+        matches.push_back(knn_matches[i][0]);
+      }
+    }
   }
 }
 
@@ -64,9 +85,7 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img,
 
   // perform feature description
   double t = (double)cv::getTickCount();
-  std::cout << "11111111111111111111111111" << std::endl;
 
-  extractor->compute(img, keypoints, descriptors);
   t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
   cout << descriptorType << " descriptor extraction in " << 1000 * t / 1.0
        << " ms" << endl;
