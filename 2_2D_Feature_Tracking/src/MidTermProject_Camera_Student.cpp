@@ -20,6 +20,21 @@ using namespace std;
 
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[]) {
+  if (argc < 3) {
+    // Tell the user how to run the program
+    std::cerr << "Usage: " << argv[0] << "\n"
+              << "Feature_detector_name:  SHITOMASI, HARRIS, FAST, BRISK, ORB, "
+                 "AKAZE, SIFT \n"
+              << "Feature_descriptor_name: BRIEF, ORB, FREAK, AKAZE, SIFT"
+              << std::endl;
+    return 1;
+  }
+  // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+  string detectorType = argv[1];
+  // BRIEF, ORB, FREAK, AKAZE, SIFT
+  string descriptorType = argv[2];
+  std::cout << "Feature_detector_name: " << detectorType << std::endl;
+  std::cout << "Feature_descriptor_name" << detectorType << std::endl;
   /* INIT VARIABLES AND DATA STRUCTURES */
 
   // data location
@@ -75,8 +90,6 @@ int main(int argc, const char *argv[]) {
 
     // extract 2D keypoints from current image
     vector<cv::KeyPoint> keypoints;
-    string detectorType = "HARRIS";  //#"SHITOMASI";
-
     // string-based selection of feature detection
     // HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
     if (detectorType == "SHITOMASI") {
@@ -103,9 +116,7 @@ int main(int argc, const char *argv[]) {
           keypoints.erase(it);
         }
       }
-    }
-    std::cout << "size--------" << keypoints.size() << std::endl;
-    //// EOF STUDENT ASSIGNMENT
+    }  //// EOF STUDENT ASSIGNMENT
 
     // optional : limit number of keypoints (helpful for debugging and learning)
     bool bLimitKpts = false;
@@ -131,7 +142,6 @@ int main(int argc, const char *argv[]) {
     /// FREAK, AKAZE, SIFT
 
     cv::Mat descriptors;
-    string descriptorType = "BRISK";  // BRIEF, ORB, FREAK, AKAZE, SIFT
     descKeypoints((dataBuffer.end() - 1)->keypoints,
                   (dataBuffer.end() - 1)->cameraImg, descriptors,
                   descriptorType);
