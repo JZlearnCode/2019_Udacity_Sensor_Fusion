@@ -198,7 +198,6 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img) {
   double k = 0.04;
 
   // Apply corner detection
-  double t = (double)cv::getTickCount();
   vector<cv::Point2f> corners;
   // goodFeaturesToTrack is the Shi-Tomasi corner detector
   cv::goodFeaturesToTrack(img, corners, maxCorners, qualityLevel, minDistance,
@@ -211,7 +210,4 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img) {
     newKeyPoint.size = blockSize;
     keypoints.push_back(newKeyPoint);
   }
-  t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-  cout << "Shi-Tomasi detection with n=" << keypoints.size() << " keypoints in "
-       << 1000 * t / 1.0 << " ms" << endl;
 }
