@@ -96,10 +96,10 @@ void featureTrackingPipelinle(string imgBasePath, string out_dir,
             << "  feature descriptor: " << feature_descriptor_name << std::endl;
   std::cout << "average detector time " << average_detector_time
             << " milliseconds" << std::endl;
-  std::cout << "average descriptor time " << average_descriptor_time
-            << " milliseconds" << std::endl;
   std::cout << "average num keypoints detected per frame "
             << average_num_keypoints << std::endl;
+  std::cout << "average descriptor time " << average_descriptor_time
+            << " milliseconds" << std::endl;
   std::cout << "average number of keypoint matches " << average_num_matches
             << std::endl;
   std::cout << "--------------------------------------------" << std::endl;
