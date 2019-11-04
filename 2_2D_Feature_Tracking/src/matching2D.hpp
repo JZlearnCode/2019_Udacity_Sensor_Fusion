@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <cmath>
+#include <deque>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -23,11 +24,13 @@ void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img);
 void detKeypointsShiTomasi(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img);
 void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img,
                         std::string detectorType);
-void descKeypoints(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img,
-                   cv::Mat &descriptors, std::string descriptorType);
-void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource,
-                      std::vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource,
-                      cv::Mat &descRef, std::vector<cv::DMatch> &matches,
+void detectKeyPoints(std::deque<DataFrame> *dataBuffer,
+                     std::string detectorType);
+void descKeypoints(std::deque<DataFrame> *dataBuffer,
+                   std::string descriptorType);
+cv::Ptr<cv::DescriptorMatcher> createMatcher(std::string descriptorType,
+                                             std::string matcherType);
+void matchDescriptors(std::deque<DataFrame> *dataBuffer,
                       std::string descriptorType, std::string matcherType,
                       std::string selectorType);
 

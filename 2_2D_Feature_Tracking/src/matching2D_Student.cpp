@@ -3,15 +3,8 @@
 
 using namespace std;
 
-// Find best matches for keypoints in two camera images based on several
-// matching methods
-void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource,
-                      std::vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource,
-                      cv::Mat &descRef, std::vector<cv::DMatch> &matches,
-                      std::string descriptorType, std::string matcherType,
-                      std::string selectorType) {
-  // configure matcher
-  bool crossCheck = false;
+cv::Ptr<cv::DescriptorMatcher> createMatcher(std::string descriptorType,
+                                             std::string matcherType) {
   cv::Ptr<cv::DescriptorMatcher> matcher;
   // cv2.NORM_L2: good for SIFT, SURF etc
   // cv2.NORM_HAMMING: binary string based descriptors like ORB, BRIEF, BRISK
@@ -24,12 +17,25 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource,
     } else {
       std::cerr << "Wrong descriptorType" << std::endl;
     }
-    matcher = cv::BFMatcher::create(normType, crossCheck);
+    matcher = cv::BFMatcher::create(normType);
   }
 
   else if (matcherType == "MAT_FLANN") {
     matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
   }
+  return matcher;
+}
+
+// Find best matches for keypoints in two camera images based on several
+// matching methods
+void matchDescriptors(deque<DataFrame> *dataBuffer, std::string descriptorType,
+                      std::string matcherType, std::string selectorType) {
+  cv::Mat &descSource = (dataBuffer->end() - 2)->descriptors;
+  cv::Mat &descRef = (dataBuffer->end() - 1)->descriptors;
+  std::vector<cv::DMatch> matches;
+  // configure matcher
+  cv::Ptr<cv::DescriptorMatcher> matcher =
+      createMatcher(descriptorType, matcherType);
 
   // perform matching task
   if (selectorType.compare("SEL_NN") == 0) {  // nearest neighbor (best match)
@@ -45,7 +51,7 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource,
     // The probability that a match is correct can be determined by taking the
     // ratio of distance from the closest neighbor to the distance of the second
     // closest
-    const float ratio_thresh = 0.7f;
+    const float ratio_thresh = 0.8f;
     for (size_t i = 0; i < knn_matches.size(); i++) {
       if (knn_matches[i][0].distance <
           ratio_thresh * knn_matches[i][1].distance) {
@@ -53,12 +59,45 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource,
       }
     }
   }
+  (dataBuffer->end() - 1)->kptMatches = matches;
+}
+
+// Detect key points
+void detectKeyPoints(deque<DataFrame> *dataBuffer, string detectorType) {
+  cv::Mat &imgGray = (dataBuffer->back()).cameraImg;
+  // extract 2D keypoints from current image
+  vector<cv::KeyPoint> keypoints;
+  // string-based selection of feature detection HARRIS, FAST, BRISK, ORB,
+  // AKAZE, SIFT
+  if (detectorType == "SHITOMASI") {
+    detKeypointsShiTomasi(keypoints, imgGray);
+  } else if (detectorType == "HARRIS") {
+    detKeypointsHarris(keypoints, imgGray);
+  } else {
+    detKeypointsModern(keypoints, imgGray, detectorType);
+  }
+  // only keep keypoints on the preceding vehicle
+  const int kVehicleBboxXmin = 535;
+  const int kVehicleBboxYmin = 180;
+  const int kVehicleBboxWidth = 180;
+  const int kVehicleBboxHeight = 150;
+  cv::Rect vehicleRect(kVehicleBboxXmin, kVehicleBboxYmin, kVehicleBboxWidth,
+                       kVehicleBboxHeight);
+  auto it = keypoints.begin();
+  while (it != keypoints.end()) {
+    if (vehicleRect.contains(it->pt)) {
+      it++;
+    } else {
+      keypoints.erase(it);
+    }
+  }
+  // push keypoints and descriptor for current frame to end of data buffer
+  (dataBuffer->end() - 1)->keypoints = keypoints;
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify
 // keypoints: BRIEF, ORB, FREAK, AKAZE, SIFT
-void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img,
-                   cv::Mat &descriptors, string descriptorType) {
+void descKeypoints(deque<DataFrame> *dataBuffer, string descriptorType) {
   // select appropriate descriptor
   cv::Ptr<cv::DescriptorExtractor> extractor;
   if (descriptorType == "BRISK") {
@@ -83,12 +122,10 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img,
               << std::endl;
   }
 
-  // perform feature description
-  double t = (double)cv::getTickCount();
-
-  t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-  cout << descriptorType << " descriptor extraction in " << 1000 * t / 1.0
-       << " ms" << endl;
+  // extract feature descriptor
+  extractor->compute((dataBuffer->back()).cameraImg,
+                     (dataBuffer->back()).keypoints,
+                     (dataBuffer->back()).descriptors);
 }
 
 // FAST, BRISK, ORB, AKAZE, SIFT
