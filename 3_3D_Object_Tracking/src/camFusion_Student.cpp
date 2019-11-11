@@ -4,6 +4,7 @@
 #include <numeric>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <unordered_map>
 
 #include "camFusion.hpp"
 #include "dataStructures.h"
@@ -151,8 +152,31 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     // ...
 }
 
-
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    for(auto &prevFrameBox : prevFrame.boundingBoxes) {
+        //key: box id for a bounding box in current frame
+        //value: number of keypoint matches between the bbox in current frame and the bbox in previous frame
+        std::unordered_map<int, int> matchesPerBox; 
+        for(auto& currFrameBox : currFrame.boundingBoxes) {
+            // count number of matches for each of the current bbox 
+            for(auto match : matches) {
+                bool insidePrevBox = prevFrameBox.roi.contains(prevFrame.keypoints[match.queryIdx].pt);
+                bool insideCurBox = currFrameBox.roi.contains(currFrame.keypoints[match.trainIdx].pt);
+                if(insidePrevBox && insideCurBox) {
+                    matchesPerBox[currFrameBox.boxID]++;
+                }
+            }
+        }
+        //get index for bounding box in current frame with maximum number of matches with a bounding box in the previous frame 
+        int max_matches = 0;
+        int max_match_cur_boxid = 0;  
+        for(auto& pair : matchesPerBox) {
+            if (pair.second > max_matches) {
+                max_match_cur_boxid = pair.first; 
+            }
+        }
+        bbBestMatches[prevFrameBox.boxID] = max_match_cur_boxid; 
+        std::cout<<"prev:"<<prevFrameBox.boxID<<" cur "<<max_match_cur_boxid<<std::endl;
+    }
 }
