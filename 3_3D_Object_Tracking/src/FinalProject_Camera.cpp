@@ -196,7 +196,8 @@ int main(int argc, const char *argv[])
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
             string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
+            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
+            std::cout<<"(dataBuffer.end() - 2)->keypoints.size()"<<(dataBuffer.end() - 2)->keypoints.size()<<std::endl;
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
@@ -213,6 +214,7 @@ int main(int argc, const char *argv[])
             //// STUDENT ASSIGNMENT
             //// TASK FP.1 -> match list of 3D objects (vector<BoundingBox>) between current and previous frame (implement ->matchBoundingBoxes)
             map<int, int> bbBestMatches;
+            std::cout<<"matches.size()"<<matches.size()<<std::endl;
             matchBoundingBoxes(matches, bbBestMatches, *(dataBuffer.end()-2), *(dataBuffer.end()-1)); // associate bounding boxes between current and previous frame using keypoint matches
             //// EOF STUDENT ASSIGNMENT
 

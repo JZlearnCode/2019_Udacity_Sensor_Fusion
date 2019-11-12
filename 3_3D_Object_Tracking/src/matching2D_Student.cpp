@@ -4,35 +4,62 @@
 
 using namespace std;
 
+cv::Ptr<cv::DescriptorMatcher> createMatcher(std::string descriptorType,
+                                             std::string matcherType) {
+  cv::Ptr<cv::DescriptorMatcher> matcher;
+  // cv2.NORM_L2: good for SIFT, SURF etc
+  // cv2.NORM_HAMMING: binary string based descriptors like ORB, BRIEF, BRISK
+  if (matcherType == "MAT_BF") {
+    int normType;
+    if (descriptorType == "DES_HOG") {
+      normType = cv::NORM_L2;
+    } else if (descriptorType == "DES_BINARY") {
+      normType = cv::NORM_HAMMING;
+    } else {
+      std::cerr << "Wrong descriptorType" << std::endl;
+    }
+    matcher = cv::BFMatcher::create(normType);
+  }
+
+  else if (matcherType == "MAT_FLANN") {
+    matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
+  }
+  return matcher;
+}
+
+// TODO: Code from Judy's implementation of project2 
 // Find best matches for keypoints in two camera images based on several matching methods
 void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource, cv::Mat &descRef,
                       std::vector<cv::DMatch> &matches, std::string descriptorType, std::string matcherType, std::string selectorType)
 {
     // configure matcher
     bool crossCheck = false;
-    cv::Ptr<cv::DescriptorMatcher> matcher;
-
-    if (matcherType.compare("MAT_BF") == 0)
-    {
-        int normType = cv::NORM_HAMMING;
-        matcher = cv::BFMatcher::create(normType, crossCheck);
-    }
-    else if (matcherType.compare("MAT_FLANN") == 0)
-    {
-        // ...
-    }
+    // configure matcher
+    cv::Ptr<cv::DescriptorMatcher> matcher = createMatcher(descriptorType, matcherType);
 
     // perform matching task
-    if (selectorType.compare("SEL_NN") == 0)
-    { // nearest neighbor (best match)
-
-        matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
+    if (selectorType.compare("SEL_NN") == 0) {  // nearest neighbor (best match)
+        matcher->match(
+            descSource, descRef,
+            matches);  // Finds the best match for each descriptor in desc1
     }
-    else if (selectorType.compare("SEL_KNN") == 0)
-    { // k nearest neighbors (k=2)
-
-        // ...
+    // k nearest neighbors (k=2)
+    else if (selectorType.compare("SEL_KNN") == 0) {
+        std::vector<std::vector<cv::DMatch> > knn_matches;
+        matcher->knnMatch(descSource, descRef, knn_matches, 2);
+        //-- Filter matches using the Lowe's ratio test
+        // The probability that a match is correct can be determined by taking the
+        // ratio of distance from the closest neighbor to the distance of the second
+        // closest
+        const float ratio_thresh = 0.8f;
+        for (size_t i = 0; i < knn_matches.size(); i++) {
+        if (knn_matches[i][0].distance <
+            ratio_thresh * knn_matches[i][1].distance) {
+            matches.push_back(knn_matches[i][0]);
+        }
+        }
     }
+    cout << "Number of matched keypoints = " << matches.size() << endl;
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
