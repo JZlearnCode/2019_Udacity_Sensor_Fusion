@@ -173,7 +173,8 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         int max_match_cur_boxid = 0;  
         for(auto& pair : matchesPerBox) {
             if (pair.second > max_matches) {
-                max_match_cur_boxid = pair.first; 
+                max_match_cur_boxid = pair.first;
+                max_matches = pair.second; 
             }
         }
         bbBestMatches[prevFrameBox.boxID] = max_match_cur_boxid; 
