@@ -7,6 +7,8 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+#include <deque>
+
 #include <opencv2/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -21,6 +23,30 @@
 #include "camFusion.hpp"
 
 using namespace std;
+
+// Load images into buffer
+string loadImages(deque<DataFrame>* dataBuffer, string imgPrefix,
+                int imgFillWidth, int imgStartIndex, int imgIndex,
+                int dataBufferSize, string imgBasePath, string imgFileType) {
+  // assemble filenames for current index
+  ostringstream imgNumber;
+  imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex;
+  string imgFullFilename =
+      imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
+  // load image from file and convert to grayscale
+  cv::Mat img, imgGray;
+  img = cv::imread(imgFullFilename);
+  cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
+  // ring buffer of size dataBufferSize
+  DataFrame frame;
+  frame.cameraImg = imgGray;
+  dataBuffer->push_back(frame);
+  // remove old images
+  if (dataBuffer->size() > dataBufferSize) {
+    dataBuffer->pop_front();
+  }
+  return imgNumber.str();
+}
 
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
@@ -71,7 +97,7 @@ int main(int argc, const char *argv[])
     // misc
     double sensorFrameRate = 10.0 / imgStepWidth; // frames per second for Lidar and camera
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
-    vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
+    deque<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
 
     /* MAIN LOOP OVER ALL IMAGES */
@@ -80,22 +106,10 @@ int main(int argc, const char *argv[])
     {
         /* LOAD IMAGE INTO BUFFER */
 
-        // assemble filenames for current index
-        ostringstream imgNumber;
-        imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex;
-        string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
-
-        // load image from file 
-        cv::Mat img = cv::imread(imgFullFilename);
-
-        // push image into data frame buffer
-        DataFrame frame;
-        frame.cameraImg = img;
-        dataBuffer.push_back(frame);
-
         cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
-
-
+        string imgNumber =  
+        loadImages(&dataBuffer, imgPrefix, imgFillWidth, imgStartIndex, imgIndex,
+                   dataBufferSize, imgBasePath, imgFileType);
         /* DETECT & CLASSIFY OBJECTS */
 
         float confThreshold = 0.2;
@@ -109,7 +123,7 @@ int main(int argc, const char *argv[])
         /* CROP LIDAR POINTS */
 
         // load 3D Lidar points from file
-        string lidarFullFilename = imgBasePath + lidarPrefix + imgNumber.str() + lidarFileType;
+        string lidarFullFilename = imgBasePath + lidarPrefix + imgNumber + lidarFileType;
         std::vector<LidarPoint> lidarPoints;
         loadLidarFromFile(lidarPoints, lidarFullFilename);
 
@@ -145,46 +159,14 @@ int main(int argc, const char *argv[])
         cv::cvtColor((dataBuffer.end()-1)->cameraImg, imgGray, cv::COLOR_BGR2GRAY);
 
         // extract 2D keypoints from current image
-        vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "SHITOMASI";
-
-        if (detectorType.compare("SHITOMASI") == 0)
-        {
-            detKeypointsShiTomasi(keypoints, imgGray, false);
-        }
-        else
-        {
-            //...
-        }
-
-        // optional : limit number of keypoints (helpful for debugging and learning)
-        bool bLimitKpts = false;
-        if (bLimitKpts)
-        {
-            int maxKeypoints = 50;
-
-            if (detectorType.compare("SHITOMASI") == 0)
-            { // there is no response info, so keep the first 50 as they are sorted in descending quality order
-                keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
-            }
-            cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
-            cout << " NOTE: Keypoints have been limited!" << endl;
-        }
-
-        // push keypoints and descriptor for current frame to end of data buffer
-        (dataBuffer.end() - 1)->keypoints = keypoints;
+        string feature_detector_name = "SHITOMASI";
+        detectKeyPoints(&dataBuffer, feature_detector_name);
 
         cout << "#5 : DETECT KEYPOINTS done" << endl;
-
-
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
-        cv::Mat descriptors;
-        string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
-
-        // push descriptors for current frame to end of data buffer
-        (dataBuffer.end() - 1)->descriptors = descriptors;
+        string feature_descriptor_name = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+        descKeypoints(&dataBuffer, feature_descriptor_name);
 
         cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
 
@@ -199,12 +181,8 @@ int main(int argc, const char *argv[])
             string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
             std::cout<<"(dataBuffer.end() - 2)->keypoints.size()"<<(dataBuffer.end() - 2)->keypoints.size()<<std::endl;
 
-            matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
-                             (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+            matchDescriptors(&dataBuffer, descriptorType, matcherType, selectorType);
 
-            // store matches in current data frame
-            (dataBuffer.end() - 1)->kptMatches = matches;
 
             cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
