@@ -145,11 +145,23 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     // ...
 }
 
+bool lidarAscendingX(LidarPoint a, LidarPoint b) {
+    return a.x < b.x;; 
+}
+ 
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    sort(lidarPointsPrev.begin(), lidarPointsPrev.end(), lidarAscendingX);
+    int prev_median_idx = lidarPointsPrev.size()/2;
+    double dist_prev = lidarPointsPrev[prev_median_idx].x; 
+
+    sort(lidarPointsCurr.begin(), lidarPointsCurr.end(), lidarAscendingX);
+    int cur_median_idx = lidarPointsCurr.size()/2;
+    double dist_cur = lidarPointsCurr[cur_median_idx].x; 
+    // constant velocity model
+    TTC = dist_cur * (1.0 / frameRate) / (dist_prev - dist_cur);
 }
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)

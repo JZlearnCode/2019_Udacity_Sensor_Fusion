@@ -34,12 +34,10 @@ string loadImages(deque<DataFrame>* dataBuffer, string imgPrefix,
   string imgFullFilename =
       imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
   // load image from file and convert to grayscale
-  cv::Mat img, imgGray;
-  img = cv::imread(imgFullFilename);
-  cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
+  cv::Mat img = cv::imread(imgFullFilename);
   // ring buffer of size dataBufferSize
   DataFrame frame;
-  frame.cameraImg = imgGray;
+  frame.cameraImg = img;
   dataBuffer->push_back(frame);
   // remove old images
   if (dataBuffer->size() > dataBufferSize) {
@@ -114,8 +112,11 @@ int main(int argc, const char *argv[])
 
         float confThreshold = 0.2;
         float nmsThreshold = 0.4;        
+        cout<<"-----------rows"<<(dataBuffer.end() - 1)->cameraImg.rows<<" channels"<<(dataBuffer.end() - 1)->cameraImg.channels()<<endl;
         detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                       yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
+
+         
 
         cout << "#2 : DETECT & CLASSIFY OBJECTS done" << endl;
 
@@ -153,11 +154,6 @@ int main(int argc, const char *argv[])
         cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
     
         /* DETECT IMAGE KEYPOINTS */
-
-        // convert current image to grayscale
-        cv::Mat imgGray;
-        cv::cvtColor((dataBuffer.end()-1)->cameraImg, imgGray, cv::COLOR_BGR2GRAY);
-
         // extract 2D keypoints from current image
         string feature_detector_name = "SHITOMASI";
         detectKeyPoints(&dataBuffer, feature_detector_name);
@@ -172,10 +168,8 @@ int main(int argc, const char *argv[])
 
         if (dataBuffer.size() > 1) // wait until at least two images have been processed
         {
-
             /* MATCH KEYPOINT DESCRIPTORS */
 
-            vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
             string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
             string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
@@ -192,8 +186,7 @@ int main(int argc, const char *argv[])
             //// STUDENT ASSIGNMENT
             //// TASK FP.1 -> match list of 3D objects (vector<BoundingBox>) between current and previous frame (implement ->matchBoundingBoxes)
             map<int, int> bbBestMatches;
-            std::cout<<"matches.size()"<<matches.size()<<std::endl;
-            matchBoundingBoxes(matches, bbBestMatches, *(dataBuffer.end()-2), *(dataBuffer.end()-1)); // associate bounding boxes between current and previous frame using keypoint matches
+            matchBoundingBoxes((dataBuffer.end() - 1)->kptMatches, bbBestMatches, *(dataBuffer.end()-2), *(dataBuffer.end()-1)); // associate bounding boxes between current and previous frame using keypoint matches
             //// EOF STUDENT ASSIGNMENT
 
             // store matches in current data frame

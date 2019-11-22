@@ -105,11 +105,14 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
 
 // Detect key points
 void detectKeyPoints(deque<DataFrame> *dataBuffer, string detectorType) {
-  cv::Mat &imgGray = (dataBuffer->back()).cameraImg;
+  // convert current image to grayscale
+  cv::Mat imgGray;
+  cv::cvtColor((dataBuffer->end()-1)->cameraImg, imgGray, cv::COLOR_BGR2GRAY);
   // extract 2D keypoints from current image
   vector<cv::KeyPoint> keypoints;
   // string-based selection of feature detection HARRIS, FAST, BRISK, ORB,
   // AKAZE, SIFT
+  std::cout<<"before detect keypoints "<<std::endl;
   if (detectorType == "SHITOMASI") {
     detKeypointsShiTomasi(keypoints, imgGray);
   } else if (detectorType == "HARRIS") {
@@ -117,8 +120,10 @@ void detectKeyPoints(deque<DataFrame> *dataBuffer, string detectorType) {
   } else {
     detKeypointsModern(keypoints, imgGray, detectorType);
   }
+  std::cout<<"detect keypoints before push"<<std::endl;
   // push keypoints and descriptor for current frame to end of data buffer
   (dataBuffer->end() - 1)->keypoints = keypoints;
+  std::cout<<"num keypoints"<<keypoints.size()<<std::endl;
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify
@@ -149,7 +154,9 @@ void descKeypoints(deque<DataFrame> *dataBuffer, string descriptorType) {
   }
 
   // extract feature descriptor
-  extractor->compute((dataBuffer->back()).cameraImg,
+  cv::Mat imgGray;
+  cv::cvtColor((dataBuffer->end()-1)->cameraImg, imgGray, cv::COLOR_BGR2GRAY);
+  extractor->compute(imgGray,
                      (dataBuffer->back()).keypoints,
                      (dataBuffer->back()).descriptors);
 }
