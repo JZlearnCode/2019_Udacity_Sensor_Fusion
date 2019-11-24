@@ -130,11 +130,35 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
     }
 }
 
-
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+    //keep points inside the bounding box
+    std::vector<cv::DMatch> candidateMatches;
+    std::vector<float> distMatches; 
+    for(cv::DMatch& match : kptMatches) {
+        cv::Point2f curKeyPoint= kptsCurr[match.trainIdx].pt;
+        if(boundingBox.roi.contains(curKeyPoint)) {
+            candidateMatches.push_back(match);
+
+            cv::Point2f prevKeyPoint= kptsPrev[match.queryIdx].pt;
+            float dist = cv::norm(curKeyPoint - prevKeyPoint);
+            distMatches.push_back(dist);
+        }
+    }
+
+    //matches with distance larger than the median distance is treated as outlier
+    sort(distMatches.begin(), distMatches.end());
+    float medianDist = distMatches[distMatches.size()/2];
+
+    for(size_t i = 0; i<candidateMatches.size(); i++) {
+        cv::Point2f curKeyPoint = kptsCurr[candidateMatches[i].trainIdx].pt;
+        cv::Point2f prevKeyPoint = kptsPrev[candidateMatches[i].queryIdx].pt;
+        float dist = cv::norm(curKeyPoint - prevKeyPoint);
+        if (dist < medianDist) {
+            boundingBox.kptMatches.push_back(candidateMatches[i]);
+        }
+    }
 }
 
 
