@@ -146,7 +146,6 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
             distMatches.push_back(dist);
         }
     }
-
     //matches with distance larger than the median distance is treated as outlier
     sort(distMatches.begin(), distMatches.end());
     float medianDist = distMatches[distMatches.size()/2];
@@ -156,6 +155,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
         cv::Point2f prevKeyPoint = kptsPrev[candidateMatches[i].queryIdx].pt;
         float dist = cv::norm(curKeyPoint - prevKeyPoint);
         if (dist < medianDist) {
+            // save inlier
             boundingBox.kptMatches.push_back(candidateMatches[i]);
         }
     }
@@ -166,7 +166,39 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-    // ...
+    //compute all distance ratios between all matched keypoints
+    vector<double> distRatios; 
+    double minDist = 50.0; //minimum required distance 
+    //use an outer loop and inner loop to compute distance between
+    //each keypoint to all the other keypoints 
+    for (size_t i = 0; i < kptMatches.size(); i++) {
+        cv::Point2f outerCurrKpt = kptsCurr[kptMatches[i].trainIdx].pt;
+        cv::Point2f outerPrevKpt = kptsPrev[kptMatches[i].queryIdx].pt;
+
+        for (size_t j = i+1; j<kptMatches.size(); j++) {
+            cv::Point2f innerCurrKpt = kptsCurr[kptMatches[j].trainIdx].pt;
+            cv::Point2f innerPrevKpt = kptsPrev[kptMatches[j].queryIdx].pt;
+            //compute distance ratios
+            double distCurrKpts= cv::norm(outerCurrKpt - innerCurrKpt);
+            double distPrevKpts = cv::norm(outerPrevKpt - innerPrevKpt);
+            if (distPrevKpts > minDist && distCurrKpts > minDist) {
+                double distRatio = distCurrKpts / distPrevKpts;
+                distRatios.push_back(distRatio);
+            }
+        } 
+     }
+
+     // use mean distance to avoid wrong result introduced from outliers 
+     if (distRatios.size() == 0) {
+         TTC = NAN;
+         return; 
+     }
+
+     double sumDistRatio = std::accumulate(distRatios.begin(), distRatios.end(), 0.0);
+     double meanDistRatio = sumDistRatio / distRatios.size();
+
+     double dT = 1/frameRate;
+     TTC = -dT / (1 - meanDistRatio);
 }
 
 bool lidarAscendingX(LidarPoint a, LidarPoint b) {
