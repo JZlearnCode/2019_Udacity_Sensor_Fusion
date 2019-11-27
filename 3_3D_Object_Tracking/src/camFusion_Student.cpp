@@ -134,32 +134,30 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
     //keep points inside the bounding box
-    // std::vector<cv::DMatch> candidateMatches;
-    // std::vector<float> distMatches; 
+    std::vector<cv::DMatch> candidateMatches;
+    float sumDist; 
     for(cv::DMatch& match : kptMatches) {
         cv::Point2f curKeyPoint= kptsCurr[match.trainIdx].pt;
         if(boundingBox.roi.contains(curKeyPoint)) {
-            // candidateMatches.push_back(match);
+            candidateMatches.push_back(match);
 
-            // cv::Point2f prevKeyPoint= kptsPrev[match.queryIdx].pt;
-            // float dist = cv::norm(curKeyPoint - prevKeyPoint);
-            // distMatches.push_back(dist);
-            boundingBox.kptMatches.push_back(match);
+            cv::Point2f prevKeyPoint= kptsPrev[match.queryIdx].pt;
+            float dist = cv::norm(curKeyPoint - prevKeyPoint);
+            sumDist+=dist;
         }
     }
-    //matches with distance larger than the median distance is treated as outlier
-    // sort(distMatches.begin(), distMatches.end());
-    // float medianDist = distMatches[distMatches.size()/2];
-
-    // for(size_t i = 0; i<candidateMatches.size(); i++) {
-    //     cv::Point2f curKeyPoint = kptsCurr[candidateMatches[i].trainIdx].pt;
-    //     cv::Point2f prevKeyPoint = kptsPrev[candidateMatches[i].queryIdx].pt;
-    //     float dist = cv::norm(curKeyPoint - prevKeyPoint);
-    //     if (dist < medianDist) {
-    //         // save inlier
-    //         boundingBox.kptMatches.push_back(candidateMatches[i]);
-    //     }
-    // }
+    // matches with distance larger than the median distance is treated as outlier
+    float meanDist = sumDist / candidateMatches.size();
+    const double kRatio = 2;
+    for(size_t i = 0; i<candidateMatches.size(); i++) {
+        cv::Point2f curKeyPoint = kptsCurr[candidateMatches[i].trainIdx].pt;
+        cv::Point2f prevKeyPoint = kptsPrev[candidateMatches[i].queryIdx].pt;
+        float dist = cv::norm(curKeyPoint - prevKeyPoint);
+        if (dist <= meanDist*kRatio) {
+            // save inlier
+            boundingBox.kptMatches.push_back(candidateMatches[i]);
+        }
+    }
 }
 
 
@@ -169,7 +167,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 {
     //compute all distance ratios between all matched keypoints
     vector<double> distRatios; 
-    double minDist = 100.0; //minimum required distance 
+    double minDist = 10.0; //minimum required distance 
     //use an outer loop and inner loop to compute distance between
     //each keypoint to all the other keypoints 
     for (size_t i = 0; i < kptMatches.size(); i++) {
@@ -182,6 +180,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
             //compute distance ratios
             double distCurrKpts= cv::norm(outerCurrKpt - innerCurrKpt);
             double distPrevKpts = cv::norm(outerPrevKpt - innerPrevKpt);
+            //avoid division by zero 
             if (distPrevKpts > std::numeric_limits<double>::epsilon() && distCurrKpts > minDist) {
                 double distRatio = distCurrKpts / distPrevKpts;
                 distRatios.push_back(distRatio);
@@ -198,7 +197,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
      double sumDistRatio = std::accumulate(distRatios.begin(), distRatios.end(), 0.0);
      double meanDistRatio = sumDistRatio / distRatios.size();
 
-     double dT = 1/frameRate;
+     double dT = 1.0/frameRate;
      TTC = -dT / (1 - meanDistRatio);
 }
 

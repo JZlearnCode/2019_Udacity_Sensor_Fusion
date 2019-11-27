@@ -156,13 +156,13 @@ int main(int argc, const char *argv[])
     
         /* DETECT IMAGE KEYPOINTS */
         // extract 2D keypoints from current image
-        string feature_detector_name = "SHITOMASI";
+        string feature_detector_name = "SIFT";
         detectKeyPoints(&dataBuffer, feature_detector_name);
 
         cout << "#5 : DETECT KEYPOINTS done" << endl;
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
-        string feature_descriptor_name = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+        string feature_descriptor_name = "SIFT"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints(&dataBuffer, feature_descriptor_name);
 
         cout << "#6 : EXTRACT DESCRIPTORS done" << endl;
@@ -172,7 +172,7 @@ int main(int argc, const char *argv[])
             /* MATCH KEYPOINT DESCRIPTORS */
 
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
+            string descriptorType = "DES_HOG"; // DES_BINARY, DES_HOG
             string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
             std::cout<<"(dataBuffer.end() - 2)->keypoints.size()"<<(dataBuffer.end() - 2)->keypoints.size()<<std::endl;
 
