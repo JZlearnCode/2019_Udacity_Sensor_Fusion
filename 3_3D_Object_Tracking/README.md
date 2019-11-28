@@ -1,11 +1,23 @@
 # SFND 3D Object Tracking
 
-## Implementation 
+## Summary
+<img src="images/readme_images/example_final_result.png"/>
+The average absolute difference between TTC estimated using camera and Lidar is 1.39661 s. 
 
+## File structure
+```
+project
+│   README.md
+└───src
+|   └───src/            Implementation 
+└───dat                 Yolo model 
+└───images              2D image and 3D lidar points 
+```
+
+## Implementation 
 Lidar points in the ego line are shown below. 
 Lidar points whose projection into the camera falls into the same bounding box are grouped together. 
 <img src="images/readme_images/lidar_points_view.png"/>
-
 
 Step 1. Match 3D bounding box objects
 Takes previous and the current data frames and provides as outputs the ids of the matched bounding box.

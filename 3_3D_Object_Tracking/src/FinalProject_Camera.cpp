@@ -1,4 +1,3 @@
-
 /* INCLUDES FOR THIS PROJECT */
 #include <iostream>
 #include <fstream>
@@ -43,6 +42,7 @@ string loadImages(deque<DataFrame>* dataBuffer, string imgPrefix,
   if (dataBuffer->size() > dataBufferSize) {
     dataBuffer->pop_front();
   }
+  std::cout<<"Hi"<<std::endl;
   return imgNumber.str();
 }
     
