@@ -158,6 +158,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
             boundingBox.kptMatches.push_back(candidateMatches[i]);
         }
     }
+
 }
 
 
@@ -167,7 +168,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 {
     //compute all distance ratios between all matched keypoints
     vector<double> distRatios; 
-    double minDist = 10.0; //minimum required distance 
+    double minDist = 5.0; //minimum required distance 
     //use an outer loop and inner loop to compute distance between
     //each keypoint to all the other keypoints 
     for (size_t i = 0; i < kptMatches.size(); i++) {
