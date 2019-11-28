@@ -221,8 +221,13 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     TTC = dist_cur * (1.0 / frameRate) / (dist_prev - dist_cur);
 }
 
-void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
+void matchBoundingBoxes(deque<DataFrame>* dataBuffer)
 {
+    map<int, int> bbBestMatches;
+    std::vector<cv::DMatch> matches = (dataBuffer->end() - 1)->kptMatches;
+    DataFrame& prevFrame = *(dataBuffer->end()-2);
+    DataFrame& currFrame = *(dataBuffer->end()-1);
+ 
     for(auto &prevFrameBox : prevFrame.boundingBoxes) {
         //key: box id for a bounding box in current frame
         //value: number of keypoint matches between the bbox in current frame and the bbox in previous frame
@@ -247,6 +252,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
             }
         }
         bbBestMatches[prevFrameBox.boxID] = max_match_cur_boxid; 
-        std::cout<<"prev:"<<prevFrameBox.boxID<<" cur "<<max_match_cur_boxid<<std::endl;
     }
+    // store matches in current data frame
+    (dataBuffer->end()-1)->bbMatches = bbBestMatches;
 }

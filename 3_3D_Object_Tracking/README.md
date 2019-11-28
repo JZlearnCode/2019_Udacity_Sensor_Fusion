@@ -1,6 +1,12 @@
 # SFND 3D Object Tracking
 
 ## Implementation 
+
+Lidar points in the ego line are shown below. 
+Lidar points whose projection into the camera falls into the same bounding box are grouped together. 
+<img src="images/readme_images/lidar_points_view.png"/>
+
+
 Step 1. Match 3D bounding box objects
 Takes previous and the current data frames and provides as outputs the ids of the matched bounding box.
 Matches are the ones with the highest numbre of keypoint correspondences within the region of interest (bounding box)
