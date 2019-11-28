@@ -68,10 +68,8 @@ void loadCalibrationParams(cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT) {
 int main(int argc, const char *argv[])
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
-
     // data location
     string dataPath = "../";
-
     // camera
     string imgBasePath = dataPath + "images/";
     string imgPrefix = "KITTI/2011_09_26/image_02/data/000000"; // left camera, color
@@ -106,6 +104,9 @@ int main(int argc, const char *argv[])
     cv::Mat RT(4,4,cv::DataType<double>::type); // rotation matrix and translation vector
     loadCalibrationParams(P_rect_00, R_rect_00, RT);
 
+    // sum of difference for lidarTTC and cameraTTC
+    float sumDifference = 0;
+    int count = 0; 
     /* MAIN LOOP OVER ALL IMAGES */
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
     {
@@ -129,7 +130,7 @@ int main(int argc, const char *argv[])
 
         /* CLUSTER LIDAR POINT CLOUD */
         // associate Lidar points with camera-based ROI
-        float shrinkFactor = 0.10; // shrinks each bounding box by the given percentage to avoid 3D object merging at the edges of an ROI
+        float shrinkFactor = 0.2; // shrinks each bounding box by the given percentage to avoid 3D object merging at the edges of an ROI
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
     
         /* DETECT IMAGE KEYPOINTS */
@@ -191,6 +192,8 @@ int main(int argc, const char *argv[])
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     std::cout<<"ttcCamera"<<ttcCamera<<std::endl;
 
+                    sumDifference += abs(ttcLidar - ttcCamera);
+
                     //// EOF STUDENT ASSIGNMENT
 
                     bVis = false;
@@ -216,8 +219,11 @@ int main(int argc, const char *argv[])
             } // eof loop over all BB matches            
 
         }
+        count += 1; 
 
     } // eof loop over all images
+    float avgDifference = sumDifference / count;
+    std::cout<<"avgDifference"<< avgDifference<<std::endl;
 
     return 0;
 }

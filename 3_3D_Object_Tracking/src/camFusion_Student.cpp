@@ -148,7 +148,7 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
     }
     // matches with distance larger than the median distance is treated as outlier
     float meanDist = sumDist / candidateMatches.size();
-    const double kRatio = 2;
+    const double kRatio = 1.5;
     for(size_t i = 0; i<candidateMatches.size(); i++) {
         cv::Point2f curKeyPoint = kptsCurr[candidateMatches[i].trainIdx].pt;
         cv::Point2f prevKeyPoint = kptsPrev[candidateMatches[i].queryIdx].pt;
@@ -168,7 +168,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 {
     //compute all distance ratios between all matched keypoints
     vector<double> distRatios; 
-    double minDist = 5.0; //minimum required distance 
+    double minDist = 10.0; //minimum required distance 
     //use an outer loop and inner loop to compute distance between
     //each keypoint to all the other keypoints 
     for (size_t i = 0; i < kptMatches.size(); i++) {
