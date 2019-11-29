@@ -19,7 +19,7 @@ add_executable (3D_object_tracking
                 src/camFusion_Student.cpp 
                 src/main.cpp 
                 src/lidarData.cpp 
-                src/loadData.cpp
+                src/inputOutputUtil.cpp
                 src/matching2D_Student.cpp 
                 src/objectDetection2D.cpp)
 target_link_libraries (3D_object_tracking ${OpenCV_LIBRARIES})

@@ -13,8 +13,15 @@ project
 └───dat                 Yolo model 
 └───images              2D image and 3D lidar points 
 ```
+# TODO
+showLidarImgOverlay   math to project Lidar points to camera image
 
 ## Implementation 
+
+Step 1. Object Detection Using YOLO
+<img src="images/readme_images/YOLO_result.png"/>
+
+Step 2. 
 Lidar points in the ego line are shown below. 
 Lidar points whose projection into the camera falls into the same bounding box are grouped together. 
 <img src="images/readme_images/lidar_points_view.png"/>

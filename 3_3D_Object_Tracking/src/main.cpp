@@ -1,41 +1,40 @@
-#include "loadData.h"
+#include "inputOutputUtil.h"
 
 using namespace std;
-    
-
+ 
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
     // data location
-    string dataPath = "../";
+    std::string dataPath = "../";
     // camera
-    string imgBasePath = dataPath + "images/";
-    string imgPrefix = "KITTI/2011_09_26/image_02/data/000000"; // left camera, color
-    string imgFileType = ".png";
+    std::string imgBasePath = dataPath + "images/";
+    std::string imgPrefix = "KITTI/2011_09_26/image_02/data/000000"; // left camera, color
+    std::string imgFileType = ".png";
     int imgStartIndex = 0; // first file index to load (assumes Lidar and camera names have identical naming convention)
     int imgEndIndex = 18;   // last file index to load
     int imgStepWidth = 1; 
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
 
     // object detection
-    string yoloBasePath = dataPath + "dat/yolo/";
-    string yoloClassesFile = yoloBasePath + "coco.names";
-    string yoloModelConfiguration = yoloBasePath + "yolov3.cfg";
-    string yoloModelWeights = yoloBasePath + "yolov3.weights";
+    std::string yoloBasePath = dataPath + "dat/yolo/";
+    std::string yoloClassesFile = yoloBasePath + "coco.names";
+    std::string yoloModelConfiguration = yoloBasePath + "yolov3.cfg";
+    std::string yoloModelWeights = yoloBasePath + "yolov3.weights";
     // parameters for yolo object detection
     float confThreshold = 0.2; 
     float nmsThreshold = 0.4;
 
     // Lidar
-    string lidarPrefix = "KITTI/2011_09_26/velodyne_points/data/000000";
-    string lidarFileType = ".bin";
-    
+    std::string lidarPrefix = "KITTI/2011_09_26/velodyne_points/data/000000";
+    std::string lidarFileType = ".bin";
+
     // misc
     double sensorFrameRate = 10.0 / imgStepWidth; // frames per second for Lidar and camera
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
-    deque<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
-    bool bVis = false;            // visualize results
+    std::deque<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
+    bool bVis = true;            // visualize results
 
     // calibration data for camera and lidar
     cv::Mat P_rect_00(3,4,cv::DataType<double>::type); // 3x4 projection matrix after rectification
@@ -44,8 +43,7 @@ int main(int argc, const char *argv[])
     loadCalibrationParams(P_rect_00, R_rect_00, RT);
 
     // sum of difference for lidarTTC and cameraTTC
-    float sumDifference = 0;
-    int count = 0; 
+    vector<float> distDifference; 
     /* MAIN LOOP OVER ALL IMAGES */
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
     {
@@ -54,8 +52,9 @@ int main(int argc, const char *argv[])
         loadImages(&dataBuffer, imgPrefix, imgFillWidth, imgStartIndex, imgIndex,
                    dataBufferSize, imgBasePath, imgFileType);
         /* DETECT & CLASSIFY OBJECTS */        
-        detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
-                      yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis);
+        detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, 
+                       confThreshold, nmsThreshold, yoloBasePath, yoloClassesFile, 
+                       yoloModelConfiguration, yoloModelWeights, bVis);
         /* CROP LIDAR POINTS */
         // load 3D Lidar points from file
         string lidarFullFilename = imgBasePath + lidarPrefix + imgNumber + lidarFileType;
@@ -131,38 +130,19 @@ int main(int argc, const char *argv[])
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     std::cout<<"ttcCamera"<<ttcCamera<<std::endl;
 
-                    sumDifference += abs(ttcLidar - ttcCamera);
+                    distDifference.push_back(abs(ttcLidar - ttcCamera));
 
-                    //// EOF STUDENT ASSIGNMENT
-
-                    bVis = false;
-                    if (bVis)
-                    {
-                        cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
-                        showLidarImgOverlay(visImg, currBB->lidarPoints, P_rect_00, R_rect_00, RT, &visImg);
-                        cv::rectangle(visImg, cv::Point(currBB->roi.x, currBB->roi.y), cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), cv::Scalar(0, 255, 0), 2);
-                        
-                        char str[200];
-                        sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
-                        putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
-
-                        string windowName = "Final Results : TTC";
-                        cv::namedWindow(windowName, 4);
-                        cv::imshow(windowName, visImg);
-                        cout << "Press key to continue to next frame" << endl;
-                        cv::waitKey(0);
-                    }
-                    bVis = false;
-
+                    visResult(dataBuffer, currBB, bVis, P_rect_00, R_rect_00, RT,
+                              ttcLidar, ttcCamera); 
                 } // eof TTC computation
-            } // eof loop over all BB matches            
+            } // eof loop over all BB matches            aaa
 
         }
-        count += 1; 
 
     } // eof loop over all images
-    float avgDifference = sumDifference / count;
-    std::cout<<"avgDifference"<< avgDifference<<std::endl;
+    float sumDistDifference = accumulate(distDifference.begin(), distDifference.end(), 0); 
+    float avgDistDifference = sumDistDifference / distDifference.size();
+    std::cout<<"avgDistDifference"<< avgDistDifference <<std::endl;
 
     return 0;
 }

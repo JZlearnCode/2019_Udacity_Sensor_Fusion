@@ -1,4 +1,4 @@
-#include "loadData.h"
+#include "inputOutputUtil.h"
 
 using namespace std;
 void loadCalibrationParams(cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT) {
@@ -35,6 +35,29 @@ string loadImages(deque<DataFrame>* dataBuffer, string imgPrefix,
   if (dataBuffer->size() > dataBufferSize) {
     dataBuffer->pop_front();
   }
-  std::cout<<"Hello"<<std::endl;
   return imgNumber.str();
+}
+
+void visResult(const deque<DataFrame>& dataBuffer, BoundingBox* currBB, bool bVis,
+               cv::Mat& P_rect_00, cv::Mat& R_rect_00, cv::Mat& RT,
+               double ttcLidar, double ttcCamera) {
+    if (bVis)
+    {
+        cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
+        showLidarImgOverlay(visImg, currBB->lidarPoints, P_rect_00, R_rect_00, RT, &visImg);
+        cv::rectangle(visImg, 
+                      cv::Point(currBB->roi.x, currBB->roi.y), 
+                      cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), 
+                      cv::Scalar(0, 255, 0), 2);
+        
+        char str[200];
+        sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
+        putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
+
+        string windowName = "Final Results : TTC";
+        cv::namedWindow(windowName, 4);
+        cv::imshow(windowName, visImg);
+        cout << "Press key to continue to next frame" << endl;
+        cv::waitKey(0);
+    }
 }
