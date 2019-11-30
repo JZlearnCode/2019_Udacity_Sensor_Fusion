@@ -1,48 +1,6 @@
 #include "inputOutputUtil.h"
 
 using namespace std;
-void calculateTTC(std::deque<DataFrame>* dataBuffer, double sensorFrameRate,  
-                  cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, 
-                  vector<float>* distDifference, bool bVis) {
-    // loop over all BB match pairs
-    for (auto it1 = (dataBuffer->end() - 1)->bbMatches.begin(); it1 != (dataBuffer->end() - 1)->bbMatches.end(); ++it1)
-    {
-        // find bounding boxes associates with current match
-        BoundingBox *prevBB, *currBB;
-        for (auto it2 = (dataBuffer->end() - 1)->boundingBoxes.begin(); it2 != (dataBuffer->end() - 1)->boundingBoxes.end(); ++it2)
-        {
-            if (it1->second == it2->boxID) // check wether current match partner corresponds to this BB
-            {
-                currBB = &(*it2);
-            }
-        }
-
-        for (auto it2 = (dataBuffer->end() - 2)->boundingBoxes.begin(); it2 != (dataBuffer->end() - 2)->boundingBoxes.end(); ++it2)
-        {
-            if (it1->first == it2->boxID) // check wether current match partner corresponds to this BB
-            {
-                prevBB = &(*it2);
-            }
-        }
-
-        // compute TTC for current match
-        if( currBB->lidarPoints.size()>0 && prevBB->lidarPoints.size()>0 ) // only compute TTC if we have Lidar points
-        {
-            double ttcLidar; 
-            computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
-            std::cout<<"ttcLidar"<<ttcLidar<<std::endl;
-            double ttcCamera;
-            clusterKptMatchesWithROI(*currBB, (dataBuffer->end() - 2)->keypoints, (dataBuffer->end() - 1)->keypoints, (dataBuffer->end() - 1)->kptMatches);                    
-            computeTTCCamera((dataBuffer->end() - 2)->keypoints, (dataBuffer->end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
-            std::cout<<"ttcCamera"<<ttcCamera<<std::endl;
-
-            distDifference->push_back(abs(ttcLidar - ttcCamera));
-
-            visResult(*dataBuffer, currBB, bVis, P_rect_00, R_rect_00, RT,
-                        ttcLidar, ttcCamera); 
-        } // eof TTC computation
-    } // eof loop over all BB matches 
-}
 
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
@@ -120,7 +78,7 @@ int main(int argc, const char *argv[])
             // associate bounding boxes between current and previous frame using keypoint matches
             matchBoundingBoxes(&dataBuffer);
             /* COMPUTE TTC ON OBJECT IN FRONT */  
-            calculateTTC(&dataBuffer, sensorFrameRate,  
+            calculateTTCCombined(&dataBuffer, sensorFrameRate,  
                          P_rect_00, R_rect_00, RT, &distDifference, bVis); 
         }
     } // eof loop over all images
