@@ -1,28 +1,6 @@
 #include "inputOutputUtil.h"
 
 using namespace std;
-
-void detectLidar(string imgBasePath, string lidarPrefix, string imgNumber, string lidarFileType,
-                 cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT,
-                 std::deque<DataFrame>* dataBuffer) {
-    // load 3D Lidar points from file
-    string lidarFullFilename = imgBasePath + lidarPrefix + imgNumber + lidarFileType;
-    std::vector<LidarPoint> lidarPoints;
-    loadLidarFromFile(lidarPoints, lidarFullFilename);
-
-    // remove Lidar points based on distance properties
-    float minZ = -1.5, maxZ = -0.9, minX = 2.0, maxX = 20.0, maxY = 2.0, minR = 0.1; // focus on ego lane
-    cropLidarPoints(lidarPoints, minX, maxX, maxY, minZ, maxZ, minR);
-    (dataBuffer->end() - 1)->lidarPoints = lidarPoints;
-
-    /* CLUSTER LIDAR POINT CLOUD */
-    // associate Lidar points with camera-based ROI
-    float shrinkFactor = 0.2; // shrinks each bounding box by the given percentage to avoid 3D object merging at the edges of an ROI
-    clusterLidarWithROI((dataBuffer->end()-1)->boundingBoxes, 
-                        (dataBuffer->end() - 1)->lidarPoints, 
-                        shrinkFactor, P_rect_00, R_rect_00, RT);
-}
-
 void calculateTTC(std::deque<DataFrame>* dataBuffer, double sensorFrameRate,  
                   cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, 
                   vector<float>* distDifference, bool bVis) {
@@ -65,6 +43,7 @@ void calculateTTC(std::deque<DataFrame>* dataBuffer, double sensorFrameRate,
         } // eof TTC computation
     } // eof loop over all BB matches 
 }
+
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
 {

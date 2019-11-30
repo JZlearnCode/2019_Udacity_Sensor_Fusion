@@ -52,7 +52,6 @@ void loadLidarFromFile(vector<LidarPoint> &lidarPoints, string filename)
     fclose(stream);
 }
 
-
 void showLidarTopview(std::vector<LidarPoint> &lidarPoints, cv::Size worldSize, cv::Size imageSize, bool bWait)
 {
     // create topview image
