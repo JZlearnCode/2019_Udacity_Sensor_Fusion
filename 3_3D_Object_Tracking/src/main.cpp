@@ -64,7 +64,7 @@ int main(int argc, const char *argv[])
                        yoloModelConfiguration, yoloModelWeights, bVis);
         /* CROP LIDAR POINTS */
         detectLidar(imgBasePath, lidarPrefix, imgNumber, lidarFileType,
-                    P_rect_00, R_rect_00, RT, &dataBuffer);    
+                    P_rect_00, R_rect_00, RT, &dataBuffer, bVis);    
         /* DETECT IMAGE KEYPOINTS */
         // extract 2D keypoints from current image
         detectKeyPoints(&dataBuffer, feature_detector_name);
@@ -84,7 +84,7 @@ int main(int argc, const char *argv[])
     } // eof loop over all images
     float sumDistDifference = accumulate(distDifference.begin(), distDifference.end(), 0); 
     float avgDistDifference = sumDistDifference / distDifference.size();
-    std::cout<<"avgDistDifference"<< avgDistDifference <<std::endl;
+    std::cout<<"average ttc difference from Lidar and camera"<< avgDistDifference <<std::endl;
 
     return 0;
 }

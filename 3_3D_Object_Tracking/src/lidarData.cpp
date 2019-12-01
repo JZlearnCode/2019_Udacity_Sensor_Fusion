@@ -13,17 +13,13 @@ void cropLidarPoints(std::vector<LidarPoint> &lidarPoints, float minX, float max
 {
     std::vector<LidarPoint> newLidarPts; 
     for(auto it=lidarPoints.begin(); it!=lidarPoints.end(); ++it) {
-        
        if( (*it).x>=minX && (*it).x<=maxX && (*it).z>=minZ && (*it).z<=maxZ && (*it).z<=0.0 && abs((*it).y)<=maxY && (*it).r>=minR )  // Check if Lidar point is outside of boundaries
        {
            newLidarPts.push_back(*it);
        }
     }
-
     lidarPoints = newLidarPts;
 }
-
-
 
 // Load Lidar points from a given location and store them in a vector
 void loadLidarFromFile(vector<LidarPoint> &lidarPoints, string filename)

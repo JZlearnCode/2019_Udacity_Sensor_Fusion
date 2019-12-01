@@ -9,9 +9,8 @@
 #include "dataStructures.h"
 #include "lidarData.hpp"
 #include "inputOutputUtil.h"
-
 void detectLidar(std::string imgBasePath, std::string lidarPrefix, std::string imgNumber, std::string lidarFileType,
-                 cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, std::deque<DataFrame>* dataBuffer);
+                 cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, std::deque<DataFrame>* dataBuffer, bool bVis);
 void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT);
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches);
 void matchBoundingBoxes(std::deque<DataFrame>* dataBuffer);

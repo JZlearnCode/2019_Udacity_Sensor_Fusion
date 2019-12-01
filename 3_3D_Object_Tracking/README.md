@@ -1,6 +1,7 @@
 # SFND 3D Object Tracking
 
-## Summary
+## Intro
+
 <img src="images/readme_images/example_final_result.png"/>
 The average absolute difference between TTC estimated using camera and Lidar is 1.39661 s. 
 
@@ -14,7 +15,7 @@ project
 └───images              2D image and 3D lidar points 
 ```
 # TODO
-showLidarImgOverlay   math to project Lidar points to camera image
+showLidarImgOverlay     math to project Lidar points to camera image
 
 ## Implementation 
 

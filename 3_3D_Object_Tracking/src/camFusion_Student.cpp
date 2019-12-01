@@ -13,16 +13,23 @@ using namespace std;
 
 void detectLidar(string imgBasePath, string lidarPrefix, string imgNumber, string lidarFileType,
                  cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT,
-                 std::deque<DataFrame>* dataBuffer) {
+                 std::deque<DataFrame>* dataBuffer, bool bVis) {
     // load 3D Lidar points from file
     string lidarFullFilename = imgBasePath + lidarPrefix + imgNumber + lidarFileType;
     std::vector<LidarPoint> lidarPoints;
     loadLidarFromFile(lidarPoints, lidarFullFilename);
-
+    if (bVis){
+        std::cout<<"raw lidar data"<<std::endl;
+        showLidarTopview(lidarPoints, cv::Size(4.0, 20.0), cv::Size(2000, 2000), bVis);
+    }
     // remove Lidar points based on distance properties
     float minZ = -1.5, maxZ = -0.9, minX = 2.0, maxX = 20.0, maxY = 2.0, minR = 0.1; // focus on ego lane
     cropLidarPoints(lidarPoints, minX, maxX, maxY, minZ, maxZ, minR);
     (dataBuffer->end() - 1)->lidarPoints = lidarPoints;
+    if (bVis){
+        std::cout<<"raw lidar data"<<std::endl;
+        showLidarTopview(lidarPoints, cv::Size(4.0, 20.0), cv::Size(2000, 2000), bVis);
+    }
 
     /* CLUSTER LIDAR POINT CLOUD */
     // associate Lidar points with camera-based ROI
@@ -30,6 +37,10 @@ void detectLidar(string imgBasePath, string lidarPrefix, string imgNumber, strin
     clusterLidarWithROI((dataBuffer->end()-1)->boundingBoxes, 
                         (dataBuffer->end() - 1)->lidarPoints, 
                         shrinkFactor, P_rect_00, R_rect_00, RT);
+    if (bVis){
+        std::cout<<"remove lidar points outside bbox"<<std::endl;
+        showLidarTopview(lidarPoints, cv::Size(4.0, 20.0), cv::Size(2000, 2000), bVis);
+    }
 }
 
 
@@ -66,13 +77,14 @@ void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<Li
 
             // check wether point is within current bounding box
             if (smallerBox.contains(pt))
-            {
+            {   
+                //enclsingBoxes stores iterators for all bbox that contains current Lidar point
                 enclosingBoxes.push_back(it2);
             }
 
         } // eof loop over all bounding boxes
 
-        // check wether point has been enclosed by one or by multiple boxes
+        // only keep Lidar point enclosed by a single bbox 
         if (enclosingBoxes.size() == 1)
         { 
             // add Lidar point to bounding box
