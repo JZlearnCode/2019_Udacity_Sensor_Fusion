@@ -5,10 +5,12 @@
 #include <stdio.h>
 #include <vector>
 #include <deque>
+
 #include <opencv2/core.hpp>
-#include "dataStructures.h"
+
+#include "dataStructures.hpp"
 #include "lidarData.hpp"
-#include "inputOutputUtil.h"
+#include "inputOutputUtil.hpp"
 void detectLidar(std::string imgBasePath, std::string lidarPrefix, std::string imgNumber, std::string lidarFileType,
                  cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, std::deque<DataFrame>* dataBuffer, bool bVis);
 void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT);

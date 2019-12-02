@@ -16,10 +16,10 @@ add_definitions(${OpenCV_DEFINITIONS})
 
 # Executable for create matrix exercise
 add_executable (3D_object_tracking 
-                src/camFusion_Student.cpp 
+                src/camFusion.cpp 
                 src/main.cpp 
                 src/lidarData.cpp 
                 src/inputOutputUtil.cpp
-                src/matching2D_Student.cpp 
+                src/matching2D.cpp 
                 src/objectDetection2D.cpp)
 target_link_libraries (3D_object_tracking ${OpenCV_LIBRARIES})

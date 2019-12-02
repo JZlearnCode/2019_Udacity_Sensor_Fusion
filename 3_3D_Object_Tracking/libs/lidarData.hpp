@@ -6,7 +6,8 @@
 #include <fstream>
 #include <string>
 #include <deque>
-#include "dataStructures.h"
+
+#include "dataStructures.hpp"
 
 void cropLidarPoints(std::vector<LidarPoint> &lidarPoints, float minX, float maxX, float maxY, float minZ, float maxZ, float minR);
 void loadLidarFromFile(std::vector<LidarPoint> &lidarPoints, std::string filename);

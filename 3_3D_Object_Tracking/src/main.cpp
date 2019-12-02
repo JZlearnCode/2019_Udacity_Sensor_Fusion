@@ -1,4 +1,4 @@
-#include "inputOutputUtil.h"
+#include "inputOutputUtil.hpp"
 
 using namespace std;
 
@@ -7,9 +7,8 @@ int main(int argc, const char *argv[])
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
     // data location
-    std::string dataPath = "../";
     // camera
-    std::string imgBasePath = dataPath + "images/";
+    std::string imgBasePath = "../data/";
     std::string imgPrefix = "KITTI/2011_09_26/image_02/data/000000"; // left camera, color
     std::string imgFileType = ".png";
     int imgStartIndex = 0; // first file index to load (assumes Lidar and camera names have identical naming convention)
@@ -18,7 +17,7 @@ int main(int argc, const char *argv[])
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
 
     // object detection
-    std::string yoloBasePath = dataPath + "dat/yolo/";
+    std::string yoloBasePath = "../data/yolo/";
     std::string yoloClassesFile = yoloBasePath + "coco.names";
     std::string yoloModelConfiguration = yoloBasePath + "yolov3.cfg";
     std::string yoloModelWeights = yoloBasePath + "yolov3.weights";

@@ -18,7 +18,7 @@
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
 
-#include "dataStructures.h"
+#include "dataStructures.hpp"
 
 
 bool compareKeypointsHarris(cv::KeyPoint p1, cv::KeyPoint p2);
