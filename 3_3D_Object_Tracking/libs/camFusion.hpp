@@ -26,6 +26,8 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC); 
 
 void calculateTTCCombined(std::deque<DataFrame>* dataBuffer, double sensorFrameRate,  
-                  cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, 
-                  std::vector<float>* distDifference, bool bVis);         
+                          cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, 
+                          std::vector<float>* ttcCameraVect,
+                          std::vector<float>* ttcLidarVect,
+                          std::vector<float>* ttcDifference, bool bVis);         
 #endif /* camFusion_hpp */

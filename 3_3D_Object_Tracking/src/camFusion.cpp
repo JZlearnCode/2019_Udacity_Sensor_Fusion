@@ -293,8 +293,9 @@ void matchBoundingBoxes(deque<DataFrame>* dataBuffer)
 
 
 void calculateTTCCombined(std::deque<DataFrame>* dataBuffer, double sensorFrameRate,  
-                  cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, 
-                  vector<float>* distDifference, bool bVis) {
+                          cv::Mat P_rect_00, cv::Mat R_rect_00, cv::Mat RT, 
+                          vector<float>* ttcCameraVect, vector<float>* ttcLidarVect,
+                          vector<float>* ttcDifference, bool bVis) {
     // loop over all BB match pairs
     for (auto it1 = (dataBuffer->end() - 1)->bbMatches.begin(); it1 != (dataBuffer->end() - 1)->bbMatches.end(); ++it1)
     {
@@ -321,13 +322,13 @@ void calculateTTCCombined(std::deque<DataFrame>* dataBuffer, double sensorFrameR
         {
             double ttcLidar; 
             computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
-            std::cout<<"ttcLidar"<<ttcLidar<<std::endl;
             double ttcCamera;
             clusterKptMatchesWithROI(*currBB, (dataBuffer->end() - 2)->keypoints, (dataBuffer->end() - 1)->keypoints, (dataBuffer->end() - 1)->kptMatches);                    
             computeTTCCamera((dataBuffer->end() - 2)->keypoints, (dataBuffer->end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
-            std::cout<<"ttcCamera"<<ttcCamera<<std::endl;
-
-            distDifference->push_back(abs(ttcLidar - ttcCamera));
+            std::cout<<"ttcCamera"<<ttcCamera<<"ttcLidar"<<ttcLidar<<std::endl;
+            ttcCameraVect->push_back(ttcCamera);
+            ttcLidarVect->push_back(ttcLidar);
+            ttcDifference->push_back(abs(ttcLidar - ttcCamera));
 
             visResult(*dataBuffer, currBB, bVis, P_rect_00, R_rect_00, RT,
                         ttcLidar, ttcCamera); 

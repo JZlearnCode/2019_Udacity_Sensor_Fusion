@@ -1,9 +1,10 @@
+#include <unordered_set>
 #include "inputOutputUtil.hpp"
 
 using namespace std;
 
-/* MAIN PROGRAM */
-int main(int argc, const char *argv[])
+void ttcPipeline(string feature_detector_name,
+                string feature_descriptor_name)
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
     // data location
@@ -24,6 +25,17 @@ int main(int argc, const char *argv[])
     // parameters for yolo object detection
     float confThreshold = 0.2; 
     float nmsThreshold = 0.4;
+    // Feature detection
+    unordered_set<string> binary_descriptors = {"BRIEF", "ORB", "FREAK", "AKAZE"};
+    string matcherType = "MAT_BF";    // MAT_BF, MAT_FLANN
+    string descriptorType;            // DES_BINARY, DES_HOG
+    string selectorType = "SEL_KNN";  // SEL_NN, SEL_KNN
+    if (binary_descriptors.count(feature_descriptor_name) > 0) {
+        descriptorType = "DES_BINARY";
+    } else {
+        descriptorType = "DES_HOG";
+    }
+
 
     // Lidar
     std::string lidarPrefix = "KITTI/2011_09_26/velodyne_points/data/000000";
@@ -33,14 +45,7 @@ int main(int argc, const char *argv[])
     double sensorFrameRate = 10.0 / imgStepWidth; // frames per second for Lidar and camera
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
     std::deque<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
-    bool bVis = true;            // visualize results
-
-    // 2D feature detection parameters
-    string feature_detector_name = "SIFT";
-    string feature_descriptor_name = "SIFT"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
-    string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-    string descriptorType = "DES_HOG"; // DES_BINARY, DES_HOG
-    string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
+    bool bVis = false;            // visualize results
 
     // calibration data for camera and lidar
     cv::Mat P_rect_00(3,4,cv::DataType<double>::type); // 3x4 projection matrix after rectification
@@ -49,7 +54,9 @@ int main(int argc, const char *argv[])
     loadCalibrationParams(P_rect_00, R_rect_00, RT);
 
     // sum of difference for lidarTTC and cameraTTC
-    vector<float> distDifference; 
+    vector<float> ttcCameraVect;
+    vector<float> ttcLidarVect;
+    vector<float> ttcDifference; 
     /* MAIN LOOP OVER ALL IMAGES */
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
     {
@@ -78,12 +85,44 @@ int main(int argc, const char *argv[])
             matchBoundingBoxes(&dataBuffer);
             /* COMPUTE TTC ON OBJECT IN FRONT */  
             calculateTTCCombined(&dataBuffer, sensorFrameRate,  
-                         P_rect_00, R_rect_00, RT, &distDifference, bVis); 
+                         P_rect_00, R_rect_00, RT, 
+                         &ttcCameraVect, &ttcLidarVect, &ttcDifference, bVis); 
         }
     } // eof loop over all images
-    float sumDistDifference = accumulate(distDifference.begin(), distDifference.end(), 0); 
-    float avgDistDifference = sumDistDifference / distDifference.size();
-    std::cout<<"average ttc difference from Lidar and camera"<< avgDistDifference <<std::endl;
+    float avgTTCdifference = accumulate(ttcDifference.begin(), ttcDifference.end(), 0) / float(ttcDifference.size()); 
+    float avgTTCcamera = accumulate(ttcCameraVect.begin(), ttcCameraVect.end(), 0) / float(ttcCameraVect.size()); 
+    float avgTTClidar = accumulate(ttcLidarVect.begin(), ttcLidarVect.end(), 0) / float(ttcLidarVect.size()); 
 
-    return 0;
+    std::cout<<"feature_detector_name "<< feature_detector_name 
+    <<" feature_descriptor_name "<<feature_descriptor_name
+    <<" avgTTCcamera "<<avgTTCcamera 
+    <<" avgTTClidar "<<avgTTClidar
+    <<" avgTTCdifference "<<avgTTCdifference<<std::endl;
+    return;
+}
+
+/* MAIN PROGRAM */
+int main(int argc, const char* argv[]) {
+  string imgBasePath = "../images/";
+  string out_dir = "../images/results/";
+  vector<string> feature_detector_choices = {
+      "SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
+  vector<string> feature_descriptor_choices = {"BRIEF", "ORB", "FREAK", "AKAZE",
+                                               "SIFT"};
+  for (string feature_detector_name : feature_detector_choices) {
+    for (string feature_descriptor_name : feature_descriptor_choices) {
+      //"AKAZE" descriptor only works with "AKAZE" detector
+      if ((feature_detector_name == "AKAZE" ||
+           feature_descriptor_name == "AKAZE") &&
+          feature_descriptor_name != feature_detector_name) {
+        continue;
+      }
+      try {
+        ttcPipeline(feature_detector_name, feature_descriptor_name);
+      } catch (cv::Exception& e) {
+        std::cerr << e.msg << std::endl;
+      }
+    }
+  }
+  return 0;
 }
