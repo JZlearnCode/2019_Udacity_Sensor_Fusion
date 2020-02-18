@@ -16,6 +16,23 @@ class UKF {
    */
   virtual ~UKF();
 
+  /*
+  * Initialize 
+  */
+  void Initialize(const MeasurementPackage& meas_package);
+  
+  void GenerateSigmaPoints(MatrixXd* Xsig_out);
+
+  void AugmentedSigmaPoints(MatrixXd* Xsig_out);
+  
+  void SigmaPointPrediction(MatrixXd* Xsig_out);
+
+  void PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out);
+
+  void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
+
+  void UpdateState(VectorXd* x_out, MatrixXd* P_out);
+  
   /**
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
@@ -92,6 +109,9 @@ class UKF {
 
   // Augmented state dimension
   int n_aug_;
+
+  // Number of sigma points
+  int n_sig_; 
 
   // Sigma point spreading parameter
   double lambda_;
