@@ -21,13 +21,13 @@ class UKF {
   */
   void Initialize(const MeasurementPackage& meas_package);
   
-  void GenerateSigmaPoints(MatrixXd* Xsig_out);
+  //void GenerateSigmaPoints(MatrixXd* Xsig_out);
 
   void AugmentedSigmaPoints(MatrixXd* Xsig_out);
   
-  void SigmaPointPrediction(MatrixXd* Xsig_out);
+  void SigmaPointPrediction(const double delta_t, const MatrixXd& Xsig_aug);
 
-  void PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out);
+  void PredictMeanAndCovariance();
 
   void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
 
@@ -104,7 +104,7 @@ class UKF {
   // Weights of sigma points
   Eigen::VectorXd weights_;
 
-  // State dimension
+  // State dimensionf
   int n_x_;
 
   // Augmented state dimension
