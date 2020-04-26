@@ -18,8 +18,10 @@ Process Noise contains logitudinal acceleration noise and yaw acceleration noise
 
 # Radar Measurement
 
+Radar measurement below is used in "S4 Predict Measurement".
 
- 
+<img src="media/12_Radar_measurement.png"/> 
+
 # Unscented Kalman Filter 
 ## Prediction Step 
 Prediction step uses state mean and state covariance at timestep `k` to predict state mean and state covariance at timestep `k+1`. 
