@@ -171,6 +171,11 @@ void UKF::SigmaPointPrediction(const double delta_t, const MatrixXd& Xsig_aug) {
 * Example from Udacity course material
 */
 void UKF::PredictMeanAndCovariance() {
+  // predicted state mean
+  x_.fill(0.0);
+  for (int i = 0; i < n_sig_; ++i) {  // iterate over sigma points
+    x_ = x_ + weights_(i) * Xsig_pred_.col(i);
+  }
   // predicted state covariance matrix
   for (int i = 0; i < n_sig_; ++i) {  // iterate over sigma points
     // state difference
