@@ -86,9 +86,9 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out) {
   // create example covariance matrix
   MatrixXd P = MatrixXd(n_x, n_x);
   // create augmented mean vector
-  VectorXd x_aug = VectorXd(7);
+  VectorXd x_aug = VectorXd(n_aug);
   // create augmented state covariance
-  MatrixXd P_aug = MatrixXd(7, 7);
+  MatrixXd P_aug = MatrixXd(n_aug, n_aug);
   // create sigma point matrix
   MatrixXd Xsig_aug = MatrixXd(n_aug, 2 * n_aug + 1);
   // create augmented mean state (first n_x elements)
