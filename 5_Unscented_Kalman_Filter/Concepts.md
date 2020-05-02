@@ -1,3 +1,10 @@
+# Overview
+
+This project implements an Unscented Kalman Filter to estimate the state of multiple cars on a highway using noisy lidar and radar measurements.
+
+
+<img src="media/13_pipeline_workflow.png"/> 
+
 # Motion Model
 ## CVRT
 Constant turn rate and velocity magnitude.
@@ -15,6 +22,24 @@ Stochasitic part:
 
 Process Noise contains longitudinal acceleration noise and yaw acceleration noise, both are Gaussian distribution with zero mean. 
 <img src="media/3_CVRT_process_noise.png"/>
+
+# Lidar Measurement
+
+Variable definitions:
+
+`p'`: prime means have done the prediciton step but have not done the measurement step yet
+
+`Z` : measurement vector, contains position-x and position-y measures 
+
+`H` : matrix to project object's current state into the measurement space of the sensor
+
+`R` : measurement noise covariance matrix, represents the uncertainty in the position measurements we receive from the laser sensor.
+
+The off-diagonal 0s in R indicate that the noise processes are uncorrelated.
+
+<img src="media/14_Lidar_measurement.png"/> 
+
+ 
 
 # Radar Measurement
 

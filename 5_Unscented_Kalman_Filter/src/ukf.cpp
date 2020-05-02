@@ -43,11 +43,11 @@ UKF::UKF() {
   //  * measurement noise values provided by the sensor manufacturer.
   //  */
 
-  // // Laser measurement noise standard deviation position1 in m
-  // std_laspx_ = 0.15;
+  // Laser measurement noise standard deviation position1 in m
+  std_las_px_ = 0.15;
 
-  // // Laser measurement noise standard deviation position2 in m
-  // std_laspy_ = 0.15;
+  // Laser measurement noise standard deviation position2 in m
+  std_las_py_ = 0.15;
 
   // Radar related values
   // Radar measurement noise standard deviation radius in m
@@ -155,7 +155,6 @@ void UKF::SigmaPointPrediction(const double delta_t, const MatrixXd& Xsig_aug) {
     Xsig_pred_(3,i) = yaw_p;
     Xsig_pred_(4,i) = yawd_p;
   }
- 
 }
 
 /*
@@ -180,9 +179,15 @@ void UKF::PredictMeanAndCovariance() {
   }
 }
 
-/*
-Example from Udacity course material 
-*/
+void UKF::PredictLidarMeasurement() {
+  // transform sigma points into measurement space
+  for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+    // measurement model
+    Zsig_(0,i) = Xsig_pred_(0,i); //px  
+    Zsig_(1,i) = Xsig_pred_(1,i); //py
+  }
+}
+
 void UKF::PredictRadarMeasurement() {
   // transform sigma points into measurement space
   for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
@@ -200,7 +205,15 @@ void UKF::PredictRadarMeasurement() {
     Zsig_(1,i) = atan2(p_y,p_x);                                // phi
     Zsig_(2,i) = (p_x*v_x + p_y*v_y) / sqrt(p_x*p_x + p_y*p_y);   // r_dot
   }
+}
 
+void UKF::PredictSensorMeasurement(MeasurementPackage meas_package) {
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    PredictLidarMeasurement(); 
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    PredictRadarMeasurement();
+  }
   // mean predicted measurement
   z_pred_.fill(0.0);
   for (int i=0; i < n_sigma_; ++i) {
@@ -298,6 +311,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    * TODO: Complete this function! Make sure you switch between lidar and radar
    * measurements.
    */
+  // if (!is_initialized_) {
+  //   Initialize(meas_package);
+
+  //   if (MeasurementPackage::SensorType::)
+  // }
   // set measurement dimension
   // radar can measure r, phi, and r_dot
   // lidar can measure px, py 

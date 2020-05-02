@@ -29,6 +29,10 @@ class UKF {
 
   void PredictRadarMeasurement();
 
+  void PredictLidarMeasurement();
+
+  void PredictSensorMeasurement(MeasurementPackage meas_package); 
+
   void UpdateState(const Eigen::VectorXd& z);
   
   /**
@@ -85,10 +89,10 @@ class UKF {
   double std_yawdd_;
 
   // Laser measurement noise standard deviation position1 in m
-  double std_laspx_;
+  double std_las_px_;
 
   // Laser measurement noise standard deviation position2 in m
-  double std_laspy_;
+  double std_las_py_;
 
   // Radar measurement noise standard deviation radius in m
   double std_rad_r_;
