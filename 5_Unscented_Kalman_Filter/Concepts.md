@@ -347,27 +347,30 @@ Update state mean and covariance for timestep `t+1`.
  void UKF::UpdateState(VectorXd* x_out, MatrixXd* P_out) {
   int n_x = 5;
   int n_aug = 7;
+  int n_sig = 2 * n_aug + 1;
+
   int n_z = 3;
   double lambda = 3 - n_aug;
+
   // set vector for weights
-  VectorXd weights = VectorXd(2*n_aug+1);
+  VectorXd weights = VectorXd(n_sig);
   double weight_0 = lambda/(lambda+n_aug);
   double weight = 0.5/(lambda+n_aug);
   weights(0) = weight_0;
 
-  for (int i=1; i<2*n_aug+1; ++i) {  
+  for (int i=1; i<n_sig; ++i) {  
     weights(i) = weight;
   }
 
   // create example matrix with predicted sigma points in state space
-  MatrixXd Xsig_pred = MatrixXd(n_x, 2 * n_aug + 1);
+  MatrixXd Xsig_pred = MatrixXd(n_x, n_sig);
   // create example vector for predicted state mean
   VectorXd x = VectorXd(n_x);
   // create example matrix for predicted state covariance
   MatrixXd P = MatrixXd(n_x,n_x);
 
   // create example matrix with sigma points in measurement space
-  MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug + 1);
+  MatrixXd Zsig = MatrixXd(n_z, n_sig);
   // create example vector for mean predicted measurement
   VectorXd z_pred = VectorXd(n_z);
 
@@ -382,7 +385,7 @@ Update state mean and covariance for timestep `t+1`.
 
   // calculate cross correlation matrix
   Tc.fill(0.0);
-  for (int i = 0; i < 2 * n_aug + 1; ++i) {  // 2n+1 simga points
+  for (int i = 0; i < n_sig; ++i) {  // 2n+1 simga points
     // residual
     VectorXd z_diff = Zsig.col(i) - z_pred;
     // angle normalization

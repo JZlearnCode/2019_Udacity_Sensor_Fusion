@@ -29,7 +29,7 @@ class UKF {
 
   void PredictRadarMeasurement();
 
-  // void UpdateState(VectorXd* x_out, MatrixXd* P_out);
+  void UpdateState(const Eigen::VectorXd& z);
   
   /**
    * ProcessMeasurement
