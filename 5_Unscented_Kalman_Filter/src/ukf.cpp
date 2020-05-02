@@ -39,6 +39,11 @@ UKF::UKF() {
   // Define values close to zero 
   near_zero_value_ = 0.001;
 
+  // if difference in time between two measurements 
+  // is too large, subdivide the prediction step is needed for stability
+  dt_threshold_ = 0.1; 
+  default_dt_ = 0.05; 
+
   // /**
   //  * measurement noise values provided by the sensor manufacturer.
   //  */
@@ -58,6 +63,18 @@ UKF::UKF() {
 
   // Radar measurement noise standard deviation radius change in m/s
   std_rad_rd_ = 0.3;
+
+  n_z_radar_ = 3;
+  n_z_lidar_ = 2; 
+
+  R_radar_ = MatrixXd(n_z_radar_, n_z_radar_);
+  R_radar_ <<  std_rad_r_*std_rad_r_, 0, 0,
+               0, std_rad_phi_*std_rad_phi_, 0,
+               0, 0,std_rad_rd_*std_rad_rd_;
+
+  R_radar_ = MatrixXd(n_z_lidar_, n_z_lidar_);
+  R_radar_ <<  std_las_px_ * std_las_px_, 0,
+               0, std_las_py_ * std_las_py_;                     
 
   // set weights
   weights_ = VectorXd::Zero(n_sigma_);
@@ -112,7 +129,7 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_aug) {
 
 delta_t time diff in sec
 */
-void UKF::SigmaPointPrediction(const double delta_t, const MatrixXd& Xsig_aug) {
+void UKF::SigmaPointPrediction(long delta_t, const MatrixXd& Xsig_aug) {
   // predict sigma points
   for (int i = 0; i< 2*n_aug_+1; ++i) {
     // extract values for better readability
@@ -307,27 +324,50 @@ void UKF::Initialize(const MeasurementPackage& meas_package) {
 }
 
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-  /**
-   * TODO: Complete this function! Make sure you switch between lidar and radar
-   * measurements.
-   */
-  // if (!is_initialized_) {
-  //   Initialize(meas_package);
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR && !use_radar_) {
+    return; 
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER && !use_laser_) {
+    return;
+  }
+  if (!is_initialized_) {
+    Initialize(meas_package);
+  }
 
-  //   if (MeasurementPackage::SensorType::)
-  // }
-  // set measurement dimension
-  // radar can measure r, phi, and r_dot
-  // lidar can measure px, py 
-  //if (meas_package.)
-  //// add measurement noise covariance matrix
-  // R_radar_ = MatrixXd(n_z_, n_z_);
-  // R_radar_ <<  std_rad_r_*std_rad_r_, 0, 0,
-  //              0, std_rad_phi_*std_rad_phi_, 0,
-  //              0, 0,std_rad_rd_*std_rad_rd_;
+  long dt = (meas_package.timestamp_ - previous_timestamp_) * 1e-6;
+  previous_timestamp_ = meas_package.timestamp_;
+
+  // use smaller timestamp to improve stability
+  while (dt > dt_threshold_) {
+    Prediction(default_dt_);
+    dt = dt - default_dt_; 
+  }
+  Prediction(dt); 
+  
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    //Radar measures range, bearing, radial velocity 
+    n_z_ = n_z_radar_;
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    //Laser measures position x, y 
+    n_z_ = n_z_lidar_; 
+  }
+
+  //create matrix for sigma points in measurement space 
+  Zsig_ = MatrixXd::Zero(n_z_, n_sigma_); 
+
+  //mean predicted measurement 
+  z_pred_ = VectorXd::Zero(n_z_);
+
+  //measurement covariance matrix 
+  S_ = MatrixXd::Zero(n_z_, n_z_);  
+
+  UpdateState(meas_package.raw_measurements_); 
+ 
+  
 }
 
-void UKF::Prediction(double delta_t) {
+void UKF::Prediction(long delta_t) {
   /**
    * TODO: Complete this function! Estimate the object's location. 
    * Modify the state vector, x_. Predict sigma points, the state, 

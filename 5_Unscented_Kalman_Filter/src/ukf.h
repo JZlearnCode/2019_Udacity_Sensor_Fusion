@@ -23,7 +23,7 @@ class UKF {
   
   void AugmentedSigmaPoints(Eigen::MatrixXd* Xsig_out);
   
-  void SigmaPointPrediction(const double delta_t, const Eigen::MatrixXd& Xsig_aug);
+  void SigmaPointPrediction(long delta_t, const Eigen::MatrixXd& Xsig_aug);
 
   void PredictMeanAndCovariance();
 
@@ -46,7 +46,7 @@ class UKF {
    * matrix
    * @param delta_t Time between k and k+1 in s
    */
-  void Prediction(double delta_t);
+  void Prediction(long delta_t);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
@@ -88,6 +88,11 @@ class UKF {
   // Process noise standard deviation yaw acceleration in rad/s^2
   double std_yawdd_;
 
+  // if difference in time between two measurements 
+  // is too large, subdivide the prediction step is needed for stability
+  double dt_threshold_; 
+  double default_dt_; 
+
   // Laser measurement noise standard deviation position1 in m
   double std_las_px_;
 
@@ -121,8 +126,12 @@ class UKF {
   // A value representing small value near zero 
   double near_zero_value_;
 
-  // set measurement dimension, radar can measure r, phi, and r_dot
+  // set measurement dimension
   int n_z_;
+  //radar can measure r, phi, and r_dot
+  int n_z_radar_ = 3;
+  //lidar measures position x,y 
+  int n_z_lidar_ = 2; 
 
   // create matrix for sigma points in measurement space
   Eigen::MatrixXd Zsig_;
