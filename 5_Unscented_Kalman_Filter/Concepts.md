@@ -13,7 +13,7 @@ State vector at time `t+1` can be estimated using state at time `t` based on CVR
 
 Stochasitic part: 
 
-Process Noise contains logitudinal acceleration noise and yaw acceleration noise, both are Gaussian distribution with zero mean. 
+Process Noise contains longitudinal acceleration noise and yaw acceleration noise, both are Gaussian distribution with zero mean. 
 <img src="media/3_CVRT_process_noise.png"/>
 
 # Radar Measurement

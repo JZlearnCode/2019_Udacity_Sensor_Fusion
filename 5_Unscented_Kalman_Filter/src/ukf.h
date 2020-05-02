@@ -23,7 +23,7 @@ class UKF {
   
   void AugmentedSigmaPoints(Eigen::MatrixXd* Xsig_out);
   
-  // void SigmaPointPrediction(const double delta_t, const MatrixXd& Xsig_aug);
+  void SigmaPointPrediction(const double delta_t, const Eigen::MatrixXd& Xsig_aug);
 
   // void PredictMeanAndCovariance();
 
@@ -113,6 +113,9 @@ class UKF {
 
   // Sigma point spreading parameter
   double lambda_;
+
+  // A value representing small value near zero 
+  double near_zero_value_;
 };
 
 #endif  // UKF_H
