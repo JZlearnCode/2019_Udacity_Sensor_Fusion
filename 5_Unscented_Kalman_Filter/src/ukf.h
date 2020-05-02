@@ -25,7 +25,7 @@ class UKF {
   
   void SigmaPointPrediction(const double delta_t, const Eigen::MatrixXd& Xsig_aug);
 
-  // void PredictMeanAndCovariance();
+  void PredictMeanAndCovariance();
 
   // void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
 

@@ -33,7 +33,7 @@ UKF::UKF() {
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 0.6;
 
-  // Smal value to represent close to zero 
+  // Define values close to zero 
   near_zero_value_ = 0.001;
 
   
@@ -56,15 +56,15 @@ UKF::UKF() {
   // // Radar measurement noise standard deviation radius change in m/s
   // std_radrd_ = 0.3;
 
-  // Xsig_pred_ = MatrixXd::Zero(n_x_, n_sig_);
+  Xsig_pred_ = MatrixXd::Zero(n_x_, n_sigma_);
 
-  // // set weights
-  // weights_ = VectorXd::Zero(n_sig_);
-  // double weight_0 = lambda_/(lambda_+n_aug_);
-  // weights_(0) = weight_0;
-  // for (int i=1; i<n_sigma_; ++i) {   
-  //   weights_(i) = 0.5/(n_aug_+lambda_);
-  // }
+  // set weights
+  weights_ = VectorXd::Zero(n_sigma_);
+  double weight_0 = lambda_/(lambda_+n_aug_);
+  weights_(0) = weight_0;
+  for (int i=1; i<n_sigma_; ++i) {   
+    weights_(i) = 0.5/(lambda_+n_aug_);
+  }
 }
 
 UKF::~UKF() {}
@@ -157,26 +157,27 @@ void UKF::SigmaPointPrediction(const double delta_t, const MatrixXd& Xsig_aug) {
  
 }
 
-// /*
-// * Example from Udacity course material
-// */
-// void UKF::PredictMeanAndCovariance() {
-//   // predicted state mean
-//   x_.fill(0.0);
-//   for (int i = 0; i < n_sig_; ++i) {  // iterate over sigma points
-//     x_ = x_ + weights_(i) * Xsig_pred_.col(i);
-//   }
-//   // predicted state covariance matrix
-//   for (int i = 0; i < n_sig_; ++i) {  // iterate over sigma points
-//     // state difference
-//     VectorXd x_diff = Xsig_pred_.col(i) - x_;
-//     // angle normalization  [0, 360] --> [-180, 180]
-//     while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
-//     while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
+/*
+* Example from Udacity course material
+*/
+void UKF::PredictMeanAndCovariance() {
+  // predicted state mean
+  x_.fill(0.0);
+  for (int i = 0; i < n_sigma_; ++i) {  // iterate over sigma points
+    x_ = x_ + weights_(i) * Xsig_pred_.col(i);
+  }
+  // predicted state covariance matrix
+  for (int i = 0; i < n_sigma_; ++i) {  // iterate over sigma points
+    // state difference
+    // Xsig_pred_ = [px_p py_p v_p yaw_p yawd_p]
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+    // angle normalization  [0, 360] --> [-180, 180]
+    while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
+    while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
 
-//     P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;
-//   }
-// }
+    P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;
+  }
+}
 
 // /*
 // Example from Udacity course material 

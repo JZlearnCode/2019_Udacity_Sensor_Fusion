@@ -177,9 +177,9 @@ void UKF::SigmaPointPrediction(MatrixXd* Xsig_out) {
 Calculate mean and covariance matrix of the predicted state using the 
 predicted sigma points from S2.
 
-In the formulas below, subscrip `i` indincates `ith` column of the matrix.
+In the formulas below, subscript `i` indincates `ith` column of the matrix.
 
-Weights is smaller if the spreading parameter `λ` is larger, meaning the sigma points
+Weight is smaller if the spreading parameter `λ` is larger, meaning the sigma points
 are further from center. 
 
 In S1, given mean and covariance,
@@ -192,12 +192,13 @@ and covariance calculated.
 void UKF::PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out) {
   int n_x = 5;
   int n_aug = 7;
+  int n_sigma = 2*n_aug+1; 
   // define spreading parameter
   double lambda = 3 - n_aug;
   // create example matrix with predicted sigma points
-  MatrixXd Xsig_pred = MatrixXd(n_x, 2 * n_aug + 1);
+  MatrixXd Xsig_pred = MatrixXd(n_x, n_sigma);
   // create vector for weights
-  VectorXd weights = VectorXd(2*n_aug+1);
+  VectorXd weights = VectorXd(n_sigma);
   // create vector for predicted state
   VectorXd x = VectorXd(n_x);
   // create covariance matrix for prediction
@@ -206,20 +207,20 @@ void UKF::PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out) {
   // set weights
   double weight_0 = lambda/(lambda+n_aug);
   weights(0) = weight_0;
-  for (int i=1; i<2*n_aug+1; ++i) {  // 2n+1 weights
-    double weight = 0.5/(n_aug+lambda);
+  for (int i=1; i<n_sigma; ++i) {  // 2n+1 weights
+    double weight = 0.5/(lambda+n_aug);
     weights(i) = weight;
   }
 
   // predicted state mean
   x.fill(0.0);
-  for (int i = 0; i < 2 * n_aug + 1; ++i) {  // iterate over sigma points
+  for (int i = 0; i < n_sigma; ++i) {  // iterate over sigma points
     x = x + weights(i) * Xsig_pred.col(i);
   }
 
   // predicted state covariance matrix
   P.fill(0.0);
-  for (int i = 0; i < 2 * n_aug + 1; ++i) {  // iterate over sigma points
+  for (int i = 0; i < n_sigma; ++i) {  // iterate over sigma points
     // state difference from predicted mean 
     VectorXd x_diff = Xsig_pred.col(i) - x;
     // angle normalization  [0, 360] --> [-180, 180]
