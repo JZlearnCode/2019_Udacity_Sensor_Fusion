@@ -251,6 +251,7 @@ Following is the math in detail.
 
 <img src="media/10_predict_measurement_math.png"/>
 
+Math regarding predict radar measurement is in `Radar Measurement`  section. 
 
 ```cpp
 void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out) {
@@ -288,10 +289,6 @@ void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out) {
   // measurement covariance matrix S
   MatrixXd S = MatrixXd(n_z,n_z);
 
-  /**
-   * Student part begin
-   */
-
   // transform sigma points into measurement space
   for (int i = 0; i < n_sig; ++i) {  // 2n+1 simga points
     // extract values for better readability
@@ -321,7 +318,7 @@ void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out) {
     // residual
     VectorXd z_diff = Zsig.col(i) - z_pred;
 
-    // angle normalization
+    // angle normalization angle normalization  [0, 360] --> [-180, 180]
     while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
     while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
 

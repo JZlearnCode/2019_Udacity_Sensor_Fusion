@@ -27,7 +27,7 @@ class UKF {
 
   void PredictMeanAndCovariance();
 
-  // void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
+  void PredictRadarMeasurement();
 
   // void UpdateState(VectorXd* x_out, MatrixXd* P_out);
   
@@ -91,13 +91,13 @@ class UKF {
   double std_laspy_;
 
   // Radar measurement noise standard deviation radius in m
-  double std_radr_;
+  double std_rad_r_;
 
   // Radar measurement noise standard deviation angle in rad
-  double std_radphi_;
+  double std_rad_phi_;
 
   // Radar measurement noise standard deviation radius change in m/s
-  double std_radrd_ ;
+  double std_rad_rd_ ;
 
   // Weights of sigma points
   Eigen::VectorXd weights_;
@@ -116,6 +116,19 @@ class UKF {
 
   // A value representing small value near zero 
   double near_zero_value_;
+
+  // set measurement dimension, radar can measure r, phi, and r_dot
+  int n_z_;
+
+  // create matrix for sigma points in measurement space
+  Eigen::MatrixXd Zsig_;
+  // mean predicted measurement
+  Eigen::VectorXd z_pred_;
+  // measurement covariacne matrix S
+  Eigen::MatrixXd S_; 
+  // Radar measurement noise covariance matrix 
+  Eigen::MatrixXd R_radar_;
+
 };
 
 #endif  // UKF_H

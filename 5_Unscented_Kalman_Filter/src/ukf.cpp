@@ -16,6 +16,7 @@ UKF::UKF() {
 
   is_initialized_ = false;
 
+  // State related variables 
   n_x_ = 5;
   n_aug_ = 7;
   n_sigma_ = 2 * n_aug_ + 1;
@@ -23,6 +24,8 @@ UKF::UKF() {
   
   // initial state vector
   x_ = VectorXd::Zero(n_x_);
+
+  Xsig_pred_ = MatrixXd::Zero(n_x_, n_sigma_);
 
   // initial covariance matrix
   P_ = MatrixXd::Zero(n_x_, n_x_);
@@ -36,7 +39,6 @@ UKF::UKF() {
   // Define values close to zero 
   near_zero_value_ = 0.001;
 
-  
   // /**
   //  * measurement noise values provided by the sensor manufacturer.
   //  */
@@ -47,16 +49,15 @@ UKF::UKF() {
   // // Laser measurement noise standard deviation position2 in m
   // std_laspy_ = 0.15;
 
-  // // Radar measurement noise standard deviation radius in m
-  // std_radr_ = 0.3;
+  // Radar related values
+  // Radar measurement noise standard deviation radius in m
+  std_rad_r_ = 0.3;
 
-  // // Radar measurement noise standard deviation angle in rad
-  // std_radphi_ = 0.03;
+  // Radar measurement noise standard deviation angle in rad
+  std_rad_phi_ = 0.03;
 
-  // // Radar measurement noise standard deviation radius change in m/s
-  // std_radrd_ = 0.3;
-
-  Xsig_pred_ = MatrixXd::Zero(n_x_, n_sigma_);
+  // Radar measurement noise standard deviation radius change in m/s
+  std_rad_rd_ = 0.3;
 
   // set weights
   weights_ = VectorXd::Zero(n_sigma_);
@@ -179,87 +180,49 @@ void UKF::PredictMeanAndCovariance() {
   }
 }
 
-// /*
-// Example from Udacity course material 
-// */
-// void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out) {
-//   // set measurement dimension, radar can measure r, phi, and r_dot
-//   int n_z = 3;
+/*
+Example from Udacity course material 
+*/
+void UKF::PredictRadarMeasurement() {
+  // transform sigma points into measurement space
+  for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+    // extract values for better readability
+    double p_x = Xsig_pred_(0,i);
+    double p_y = Xsig_pred_(1,i);
+    double v  = Xsig_pred_(2,i);
+    double yaw = Xsig_pred_(3,i);
 
-//   // radar measurement noise standard deviation radius in m
-//   double std_radr = 0.3;
+    double v_x = cos(yaw)*v;
+    double v_y = sin(yaw)*v;
 
-//   // radar measurement noise standard deviation angle in rad
-//   double std_radphi = 0.0175;
+    // measurement model
+    Zsig_(0,i) = sqrt(p_x*p_x + p_y*p_y);                       // r
+    Zsig_(1,i) = atan2(p_y,p_x);                                // phi
+    Zsig_(2,i) = (p_x*v_x + p_y*v_y) / sqrt(p_x*p_x + p_y*p_y);   // r_dot
+  }
 
-//   // radar measurement noise standard deviation radius change in m/s
-//   double std_radrd = 0.1;
+  // mean predicted measurement
+  z_pred_.fill(0.0);
+  for (int i=0; i < n_sigma_; ++i) {
+    z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
+  }
 
-//   // create example matrix with predicted sigma points
-//   MatrixXd Xsig_pred = MatrixXd(n_x, 2 * n_aug + 1);
-//   Xsig_pred <<
-//          5.9374,  6.0640,   5.925,  5.9436,  5.9266,  5.9374,  5.9389,  5.9374,  5.8106,  5.9457,  5.9310,  5.9465,  5.9374,  5.9359,  5.93744,
-//            1.48,  1.4436,   1.660,  1.4934,  1.5036,    1.48,  1.4868,    1.48,  1.5271,  1.3104,  1.4787,  1.4674,    1.48,  1.4851,    1.486,
-//           2.204,  2.2841,  2.2455,  2.2958,   2.204,   2.204,  2.2395,   2.204,  2.1256,  2.1642,  2.1139,   2.204,   2.204,  2.1702,   2.2049,
-//          0.5367, 0.47338, 0.67809, 0.55455, 0.64364, 0.54337,  0.5367, 0.53851, 0.60017, 0.39546, 0.51900, 0.42991, 0.530188,  0.5367, 0.535048,
-//           0.352, 0.29997, 0.46212, 0.37633,  0.4841, 0.41872,   0.352, 0.38744, 0.40562, 0.24347, 0.32926,  0.2214, 0.28687,   0.352, 0.318159;
+  // predicted measurement covariance 
+  S_.fill(0.0);
+  for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+    // residual
+    VectorXd z_diff = Zsig_.col(i) - z_pred_;
 
-//   // create matrix for sigma points in measurement space
-//   MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug + 1);
+    // angle normalization  [0, 360] --> [-180, 180]
+    // radar state [range,   bearing,  radial velocity]
+    while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+    while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
 
-//   // mean predicted measurement
-//   VectorXd z_pred = VectorXd(n_z);
-  
-//   // measurement covariance matrix S
-//   MatrixXd S = MatrixXd(n_z,n_z);
+    S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
+  }
 
-//   // transform sigma points into measurement space
-//   for (int i = 0; i < 2 * n_aug + 1; ++i) {  // 2n+1 simga points
-//     // extract values for better readability
-//     double p_x = Xsig_pred(0,i);
-//     double p_y = Xsig_pred(1,i);
-//     double v  = Xsig_pred(2,i);
-//     double yaw = Xsig_pred(3,i);
-
-//     double v1 = cos(yaw)*v;
-//     double v2 = sin(yaw)*v;
-
-//     // measurement model
-//     Zsig(0,i) = sqrt(p_x*p_x + p_y*p_y);                       // r
-//     Zsig(1,i) = atan2(p_y,p_x);                                // phi
-//     Zsig(2,i) = (p_x*v1 + p_y*v2) / sqrt(p_x*p_x + p_y*p_y);   // r_dot
-//   }
-
-//   // mean predicted measurement
-//   z_pred.fill(0.0);
-//   for (int i=0; i < 2*n_aug+1; ++i) {
-//     z_pred = z_pred + weights(i) * Zsig.col(i);
-//   }
-
-//   // innovation covariance matrix S
-//   S.fill(0.0);
-//   for (int i = 0; i < 2 * n_aug + 1; ++i) {  // 2n+1 simga points
-//     // residual
-//     VectorXd z_diff = Zsig.col(i) - z_pred;
-
-//     // angle normalization
-//     while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-//     while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
-
-//     S = S + weights(i) * z_diff * z_diff.transpose();
-//   }
-
-//   // add measurement noise covariance matrix
-//   MatrixXd R = MatrixXd(n_z,n_z);
-//   R <<  std_radr*std_radr, 0, 0,
-//         0, std_radphi*std_radphi, 0,
-//         0, 0,std_radrd*std_radrd;
-//   S = S + R;
-
-//   // write result
-//   *z_out = z_pred;
-//   *S_out = S;
-// }
+  S_ = S_ + R_radar_;
+}
 
 // /*
 // Example from Udacity course material 
@@ -391,6 +354,15 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    * TODO: Complete this function! Make sure you switch between lidar and radar
    * measurements.
    */
+  // set measurement dimension
+  // radar can measure r, phi, and r_dot
+  // lidar can measure px, py 
+  //if (meas_package.)
+  //// add measurement noise covariance matrix
+  // R_radar_ = MatrixXd(n_z_, n_z_);
+  // R_radar_ <<  std_rad_r_*std_rad_r_, 0, 0,
+  //              0, std_rad_phi_*std_rad_phi_, 0,
+  //              0, 0,std_rad_rd_*std_rad_rd_;
 }
 
 void UKF::Prediction(double delta_t) {
