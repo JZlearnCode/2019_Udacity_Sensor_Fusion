@@ -170,7 +170,7 @@ void UKF::PredictMeanAndCovariance() {
   // predicted state covariance matrix
   for (int i = 0; i < n_sigma_; ++i) {  // iterate over sigma points
     // state difference
-    // Xsig_pred_ = [px_p py_p v_p yaw_p yawd_p]
+    // Xsig_pred_ = [px py v yaw yawd]
     VectorXd x_diff = Xsig_pred_.col(i) - x_;
     // angle normalization  [0, 360] --> [-180, 180]
     while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
@@ -267,6 +267,30 @@ void UKF::UpdateState(const Eigen::VectorXd& z) {
   x_ = x_ + K * z_diff;
   // [n_x X n_x] = [n_x X n_x] - [n_x X n_z] * [n_z X n_z]* [n_z X n_x]
   P_ = P_ - K*S_*K.transpose();
+}
+
+void UKF::Initialize(const MeasurementPackage& meas_package) {
+  double px = 0;
+  double py = 0; 
+  // initialize with first measurement 
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    // radar measurement in polar coordinates [range, bearing,radial velocity]
+    // convert to state in cartesian coordinate [px py v yaw yawd]
+    double radar_range = meas_package.raw_measurements_(0);
+    double radar_bearing = meas_package.raw_measurements_(1);
+    px = radar_range * cos(radar_bearing);
+    py = radar_range * sin(radar_bearing);
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    px = meas_package.raw_measurements_(0);
+    py = meas_package.raw_measurements_(1);
+  }
+  x_.fill(0.0);
+  x_[0] = px;
+  x_[1] = py; 
+
+  previous_timestamp_ =  meas_package.timestamp_;
+  is_initialized_ = true; 
 }
 
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {

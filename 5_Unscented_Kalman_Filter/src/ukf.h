@@ -129,6 +129,8 @@ class UKF {
   // Radar measurement noise covariance matrix 
   Eigen::MatrixXd R_radar_;
 
+  //Time for previous step 
+  long previous_timestamp_;
 };
 
 #endif  // UKF_H
