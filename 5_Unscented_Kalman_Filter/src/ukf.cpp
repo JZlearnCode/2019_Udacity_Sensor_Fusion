@@ -83,9 +83,6 @@ UKF::UKF() {
     R_laser_ = MatrixXd::Zero(2, 2);
     R_laser_ <<     std_laspx_ * std_laspx_, 0 ,
                     0                      , std_laspy_ * std_laspy_ ;
-
-    NIS_radar_ = NIS_laser_ = 0;
-
     previous_timestamp_ = 0;
 
     // if difference in time between two measurements 
@@ -144,13 +141,14 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     Prediction(dt);
     // DONE JIN    ]  
 
-    /*****************************************************************************
-     * Update
-     * Use the sensor type to perform the update step.
-     * Update the state and covariance matrices.
-     ****************************************************************************/
+    PredictSensorMeasurement(meas_package); 
 
-    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    UpdateState(meas_package.raw_measurements_);
+
+}
+
+void UKF::PredictSensorMeasurement(MeasurementPackage meas_package) {
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
         //set measurement dimension, radar can measure r, phi, and r_dot
         n_z_ = 3;
     }
@@ -171,21 +169,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
         PredictRadarMeasurement();
-        // update NIS
-        NIS_radar_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
-        std::cout << "NIS Radar = " << NIS_radar_ << std::endl;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
         PredictLaserMeasurement();
-        // update NIS
-        NIS_laser_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
-        std::cout << "NIS LiDAR = " << NIS_laser_ << std::endl;
     }
-
-    UpdateState(meas_package.raw_measurements_);
-
 }
-
 void UKF::Prediction(long delta_t) {
   /**
    * Estimate the object's location. 
