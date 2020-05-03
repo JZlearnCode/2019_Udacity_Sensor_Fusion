@@ -39,7 +39,9 @@ public:
 
     //DONE: JIN
     void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_out);
-    void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double dt);
+
+    //DONE: JIN
+    void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double ddelta_t);
     void PredictMeanAndCovariance();
 
     void InitializeMeasurement(MeasurementPackage meas_package);
@@ -139,4 +141,6 @@ private:
     //lidar measures position x,y 
     int n_z_lidar_ = 2; 
 
+    // A value representing small value near zero 
+    double near_zero_value_;
 };
