@@ -140,10 +140,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       dt = dt - default_dt_; 
     }
     Prediction(dt);
-    // DONE JIN    ]  
-
     PredictSensorMeasurement(meas_package); 
 
+    // DONE JIN    ]
     UpdateState(meas_package.raw_measurements_);
 
 }
@@ -353,43 +352,44 @@ void UKF::PredictMeanAndCovariance() {
 }
 
 void UKF::UpdateState(const VectorXd& z) {
-    //create matrix for cross correlation Tc
-    MatrixXd Tc = MatrixXd::Zero(n_x_, n_z_);
+    // create matrix for cross correlation Tc
+    MatrixXd Tc = MatrixXd(n_x_, n_z_);
 
-    //calculate cross correlation matrix
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
+    // calculate cross correlation matrix
+    Tc.fill(0.0);
+    for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+      // residual
+      VectorXd z_diff = Zsig_.col(i) - z_pred_;
+      // angle normalization  [0, 360] --> [-180, 180]
+      // radar state [range,   bearing,  radial velocity]
+      while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+      while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
 
-        //residual
-        VectorXd z_diff = Zsig_.col(i) - z_pred_;
-        //angle normalization
-        while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-        while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+      // state difference 
+      // Xsig_pred_ = [px_p py_p v_p yaw_p yawd_p]
+      VectorXd x_diff = Xsig_pred_.col(i) - x_;
+      // angle normalization  [0, 360] --> [-180, 180]
+      while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
+      while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
 
-        // state difference
-        VectorXd x_diff = Xsig_pred_.col(i) - x_;
-        //angle normalization
-        while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
-        while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
-
-        Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+      Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
     }
 
-    //Kalman gain K;
+    // Kalman gain K;
+    // [n_x X n_z] = [n_x X n_z]  *  [n_z X n_z]  
     MatrixXd K = Tc * S_.inverse();
 
-    //residual
+    // residual
+    // [n_z]  =  [n_z]   -  [n_z]
     VectorXd z_diff = z - z_pred_;
 
-    //angle normalization
-    while (z_diff(1) > M_PI) {
-        z_diff(1) -= 2.*M_PI;
-    }
+    // angle normalization
+    while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+    while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
 
-    while (z_diff(1) < -M_PI) {
-        z_diff(1) += 2.*M_PI;
-    }
-
-    //update state mean and covariance matrix
+    // update state mean and covariance matrix
+    // [n_x] = [n_x] + [n_x X n_z] * [n_z] 
     x_ = x_ + K * z_diff;
+    // [n_x X n_x] = [n_x X n_x] - [n_x X n_z] * [n_z X n_z]* [n_z X n_x]
     P_ = P_ - K*S_*K.transpose();
 }
