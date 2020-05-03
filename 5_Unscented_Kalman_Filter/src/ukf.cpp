@@ -335,30 +335,23 @@ void UKF::SigmaPointPrediction(MatrixXd& Xsig_aug, double delta_t) {
 
 
 void UKF::PredictMeanAndCovariance() {
-    //predicted state mean
-    x_.fill(0.0);
-    //iterate over sigma points
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-        x_ += weights_(i) * Xsig_pred_.col(i);
-    }
+    // predicted state mean
+  x_.fill(0.0);
+  for (int i = 0; i < n_sigma_; ++i) {  // iterate over sigma points
+    x_ = x_ + weights_(i) * Xsig_pred_.col(i);
+  }
+  P_.fill(0.0);
+  // predicted state covariance matrix
+  for (int i = 0; i < n_sigma_; ++i) {  // iterate over sigma points
+    // state difference
+    // Xsig_pred_ = [px py v yaw yawd]
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+    // angle normalization  [0, 360] --> [-180, 180]
+    while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
+    while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
 
-    //predicted state covariance matrix
-    P_.fill(0.0);
-    //iterate over sigma points
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-        // state difference
-        VectorXd x_diff = Xsig_pred_.col(i) - x_;
-
-        //angle normalization
-        while (x_diff(3)> M_PI) {
-            x_diff(3) -= 2. * M_PI;
-        }
-        while (x_diff(3)<-M_PI) {
-            x_diff(3) += 2. * M_PI;
-        }
-
-        P_ += weights_(i) * x_diff * x_diff.transpose() ;
-    }
+    P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;
+  }
 }
 
 void UKF::UpdateState(const VectorXd& z) {
