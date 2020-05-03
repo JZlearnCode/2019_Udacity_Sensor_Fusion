@@ -25,19 +25,19 @@ UKF::UKF() {
      */
 
     // Laser measurement noise standard deviation position1 in m
-    std_laspx_ = 0.15;
+    std_las_px_ = 0.15;
 
     // Laser measurement noise standard deviation position2 in m
-    std_laspy_ = 0.15;
+    std_las_py_ = 0.15;
 
     // Radar measurement noise standard deviation radius in m
-    std_radr_ = 0.3;
+    std_rad_r_ = 0.3;
 
     // Radar measurement noise standard deviation angle in rad
-    std_radphi_ = 0.03;
+    std_rad_phi_ = 0.03;
 
     // Radar measurement noise standard deviation radius change in m/s
-    std_radrd_ = 0.3;
+    std_rad_rd_ = 0.3;
 
     /**
      * End DO NOT MODIFY section for measurement noise values
@@ -74,21 +74,22 @@ UKF::UKF() {
     // Weights of sigma points
     weights_ = VectorXd::Zero(2 * n_aug_ + 1);
 
-    //measurement noise covariance matrix
-    R_radar_ = MatrixXd::Zero(3, 3);
-    R_radar_ <<     std_radr_ * std_radr_, 0                         , 0,
-                    0                    , std_radphi_ * std_radphi_ , 0,
-                    0                    , 0                         , std_radrd_*std_radrd_;
-
-    R_lidar_ = MatrixXd::Zero(2, 2);
-    R_lidar_ <<     std_laspx_ * std_laspx_, 0 ,
-                    0                      , std_laspy_ * std_laspy_ ;
-    previous_timestamp_ = 0;
-
     // if difference in time between two measurements 
     // is too large, subdivide the prediction step is needed for stability
     dt_threshold_ = 0.1; 
     default_dt_ = 0.05; 
+
+    n_z_radar_ = 3;
+    n_z_lidar_ = 2; 
+
+    R_radar_ = MatrixXd(n_z_radar_, n_z_radar_);
+    R_radar_ <<  std_rad_r_*std_rad_r_, 0, 0,
+                0, std_rad_phi_*std_rad_phi_, 0,
+                0, 0,std_rad_rd_*std_rad_rd_;
+
+    R_lidar_ = MatrixXd(n_z_lidar_, n_z_lidar_);
+    R_lidar_ <<  std_las_px_ * std_las_px_, 0,
+                0, std_las_py_ * std_las_py_;      
 
 }
 
