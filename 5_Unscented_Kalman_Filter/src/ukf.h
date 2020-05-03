@@ -24,30 +24,21 @@ public:
      * ProcessMeasurement
      * @param meas_package The latest measurement data of either radar or laser
      */
-    //DONE: JIN
     void ProcessMeasurement(MeasurementPackage meas_package);
 
-    //DONE:JIN
-    void PredictSensorMeasurement(MeasurementPackage meas_package);
     /**
      * Prediction Predicts sigma points, the state, and the state covariance
      * matrix
      * @param delta_t Time between k and k+1 in s
      */
     //DONE: JIN
-    void Prediction(long delta_t);
+    void Prediction(double delta_t);
 
-    //DONE: JIN
     void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_out);
     void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double dt);
     void PredictMeanAndCovariance();
-
-    void InitializeMeasurement(MeasurementPackage meas_package);
     void PredictRadarMeasurement();
-    void PredictLidarMeasurement();
-
-
-    //DONE: JIN
+    void PredictLaserMeasurement();
     void UpdateState(const Eigen::VectorXd& z);
 
 
@@ -76,19 +67,19 @@ public:
     double std_yawdd_;
 
     // Laser measurement noise standard deviation position1 in m
-    double std_las_px_;
+    double std_laspx_;
 
     // Laser measurement noise standard deviation position2 in m
-    double std_las_py_;
+    double std_laspy_;
 
     // Radar measurement noise standard deviation radius in m
-    double std_rad_r_;
+    double std_radr_;
 
     // Radar measurement noise standard deviation angle in rad
-    double std_rad_phi_;
+    double std_radphi_;
 
     // Radar measurement noise standard deviation radius change in m/s
-    double std_rad_rd_ ;
+    double std_radrd_ ;
 
     // Weights of sigma points
     Eigen::VectorXd weights_;
@@ -113,7 +104,7 @@ public:
 
 private:
     // previous timestamp
-    long previous_timestamp_;
+    double previous_timestamp_;
 
     //set measurement dimension, radar can measure r, phi, and r_dot
     int n_z_;
@@ -128,15 +119,6 @@ private:
     Eigen::MatrixXd S_;
 
     //measurement noise covariance matrix
-    Eigen::MatrixXd R_lidar_, R_radar_;
-
-    // if difference in time between two measurements 
-    // is too large, subdivide the prediction step is needed for stability
-    double dt_threshold_; 
-    double default_dt_; 
-    //radar can measure r, phi, and r_dot
-    int n_z_radar_ = 3;
-    //lidar measures position x,y 
-    int n_z_lidar_ = 2; 
+    Eigen::MatrixXd R_laser_, R_radar_;
 
 };
