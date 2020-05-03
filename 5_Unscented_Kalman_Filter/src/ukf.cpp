@@ -72,8 +72,8 @@ UKF::UKF() {
                0, std_rad_phi_*std_rad_phi_, 0,
                0, 0,std_rad_rd_*std_rad_rd_;
 
-  R_radar_ = MatrixXd(n_z_lidar_, n_z_lidar_);
-  R_radar_ <<  std_las_px_ * std_las_px_, 0,
+  R_lidar_ = MatrixXd(n_z_lidar_, n_z_lidar_);
+  R_lidar_ <<  std_las_px_ * std_las_px_, 0,
                0, std_las_py_ * std_las_py_;                     
 
   // set weights
@@ -92,7 +92,7 @@ UKF::~UKF() {}
 * output : Xsig_aug  (n_aug_, 2 * n_aug_ + 1)
 MatrixXd Xsig_aug = MatrixXd(n_aug_, n_sigma_);
 */
-void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_aug) {
+void UKF::GenerateAugmentedSigmaPoints(MatrixXd& Xsig_aug) {
 
 
   // create augmented mean vector
@@ -117,10 +117,10 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_aug) {
   MatrixXd L = P_aug.llt().matrixL();
 
   
-  Xsig_aug->col(0)  = x_aug;
+  Xsig_aug.col(0)  = x_aug;
   for (int i = 0; i< n_aug_; ++i) {
-    Xsig_aug->col(i+1)       = x_aug + sqrt(lambda_+n_aug_) * L.col(i);
-    Xsig_aug->col(i+1+n_aug_) = x_aug - sqrt(lambda_+n_aug_) * L.col(i);
+    Xsig_aug.col(i+1)       = x_aug + sqrt(lambda_+n_aug_) * L.col(i);
+    Xsig_aug.col(i+1+n_aug_) = x_aug - sqrt(lambda_+n_aug_) * L.col(i);
   }
 }
 
@@ -250,7 +250,11 @@ void UKF::PredictSensorMeasurement(MeasurementPackage meas_package) {
 
     S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
   }
-  S_ = S_ + R_radar_;
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    S_ = S_ + R_radar_;
+  } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    S_ = S_ + R_lidar_;
+  }
 }
 
 /*
@@ -363,16 +367,18 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   S_ = MatrixXd::Zero(n_z_, n_z_);  
 
   UpdateState(meas_package.raw_measurements_); 
- 
-  
 }
 
 void UKF::Prediction(long delta_t) {
   /**
-   * TODO: Complete this function! Estimate the object's location. 
-   * Modify the state vector, x_. Predict sigma points, the state, 
-   * and the state covariance matrix.
+   * Estimate the object's location. 
+   * Modify the state vector, x_. 
+   * Predict sigma points, the state, and the state covariance matrix.
    */
+  MatrixXd Xsig_aug = MatrixXd::Zero(n_aug_, n_sigma_);
+  GenerateAugmentedSigmaPoints(Xsig_aug);
+  SigmaPointPrediction(delta_t, Xsig_aug);
+  PredictMeanAndCovariance();
 }
 
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
@@ -382,6 +388,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
    * covariance, P_.
    * You can also calculate the lidar NIS, if desired.
    */
+
 }
 
 void UKF::UpdateRadar(MeasurementPackage meas_package) {

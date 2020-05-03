@@ -21,7 +21,7 @@ class UKF {
   */
   void Initialize(const MeasurementPackage& meas_package);
   
-  void AugmentedSigmaPoints(Eigen::MatrixXd* Xsig_out);
+  void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_aug);
   
   void SigmaPointPrediction(long delta_t, const Eigen::MatrixXd& Xsig_aug);
 
@@ -141,6 +141,8 @@ class UKF {
   Eigen::MatrixXd S_; 
   // Radar measurement noise covariance matrix 
   Eigen::MatrixXd R_radar_;
+  // Lidar measurement noise covariance matrix 
+  Eigen::MatrixXd R_lidar_;
 
   //Time for previous step 
   long previous_timestamp_;
