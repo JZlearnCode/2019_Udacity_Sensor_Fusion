@@ -16,44 +16,53 @@ public:
      */
     virtual ~UKF() = default;
     
-    //DONE: JIN     Initizlize
+    /**
+     * Initialize with first measurement 
+     * @param meas_package The latest measurement data of either radar or laser
+     */
     void Initialize(const MeasurementPackage& meas_package);
-
 
     /**
      * ProcessMeasurement
      * @param meas_package The latest measurement data of either radar or laser
      */
-    //DONE: JIN
     void ProcessMeasurement(MeasurementPackage meas_package);
 
-    //DONE:JIN
+    /**
+     * ProcessMeasurement
+     * @param meas_package The latest measurement data of either radar or laser
+     */
     void PredictSensorMeasurement(MeasurementPackage meas_package);
+
     /**
      * Prediction Predicts sigma points, the state, and the state covariance
      * matrix
      * @param delta_t Time between k and k+1 in s
      */
-    //DONE: JIN
     void Prediction(double delta_t);
 
-    //DONE: JIN
-    void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_out);
+    /*
+    * Generate augmented sigma points 
+    * output : Xsig_aug  (n_aug_, 2 * n_aug_ + 1)
+    * MatrixXd Xsig_aug = MatrixXd(n_aug_, n_sigma_);
+    * @param Xsig_aug augmented sigma points   (n_aug_, 2 * n_aug_ + 1)
+    */
+    void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_aug);
 
-    //DONE: JIN
+    /*
+    * Generate augmented sigma points 
+    * output : Xsig_aug  (n_aug_, 2 * n_aug_ + 1)
+    * MatrixXd Xsig_aug = MatrixXd(n_aug_, n_sigma_);
+    * @param Xsig_aug augmented sigma points   (n_aug_, 2 * n_aug_ + 1)
+    */
     void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double ddelta_t);
-    //DONE: JIN
     void PredictMeanAndCovariance();
     
-    //DONE: JIN
     void InitializeMeasurement(MeasurementPackage meas_package);
-    //DONE: JIN
     void PredictRadarMeasurement();
-    //DONE: JIN
     void PredictLidarMeasurement();
 
 
-    //DONE: JIN
     void UpdateState(const Eigen::VectorXd& z);
 
 

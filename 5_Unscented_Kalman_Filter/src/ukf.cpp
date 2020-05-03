@@ -17,15 +17,10 @@ UKF::UKF() {
     std_a_ = 5.0;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 0.8;
+    std_yawdd_ = 1.0;
 
     // Define values close to zero 
-    near_zero_value_ = 0.001;
-
-    /**
-     * DO NOT MODIFY measurement noise values below.
-     * These are provided by the sensor manufacturer.
-     */
+    near_zero_value_ = 0.00001;
 
     // Laser measurement noise standard deviation position1 in m
     std_las_px_ = 0.15;
@@ -42,14 +37,7 @@ UKF::UKF() {
     // Radar measurement noise standard deviation radius change in m/s
     std_rad_rd_ = 0.3;
 
-    /**
-     * End DO NOT MODIFY section for measurement noise values
-     */
 
-    /**
-     * TODO: Complete the initialization. See ukf.h for other member properties.
-     * Hint: one or more values initialized above might be wildly off...
-     */
     // Initially set to false, set to true in first call of ProcessMeasurement
     is_initialized_ = false;
 
@@ -250,14 +238,7 @@ void UKF::Prediction(double delta_t) {
 }
 
 
-/*
-* Step 1: Generate augmented sigma points 
-* output : Xsig_aug  (n_aug_, 2 * n_aug_ + 1)
-MatrixXd Xsig_aug = MatrixXd(n_aug_, n_sigma_);
-*/
 void UKF::GenerateAugmentedSigmaPoints(MatrixXd& Xsig_aug) {
-
-
   // create augmented mean vector
   VectorXd x_aug = VectorXd(n_aug_);
 
