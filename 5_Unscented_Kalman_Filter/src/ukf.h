@@ -42,10 +42,14 @@ public:
 
     //DONE: JIN
     void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double ddelta_t);
+    //DONE: JIN
     void PredictMeanAndCovariance();
-
+    
+    //DONE: JIN
     void InitializeMeasurement(MeasurementPackage meas_package);
+    //DONE: JIN
     void PredictRadarMeasurement();
+    //DONE: JIN
     void PredictLidarMeasurement();
 
 

@@ -92,7 +92,14 @@ UKF::UKF() {
 
     R_lidar_ = MatrixXd(n_z_lidar_, n_z_lidar_);
     R_lidar_ <<  std_las_px_ * std_las_px_, 0,
-                0, std_las_py_ * std_las_py_;      
+                0, std_las_py_ * std_las_py_;     
+    // set weights
+    weights_ = VectorXd::Zero(n_sigma_);
+    double weight_0 = lambda_/(lambda_+n_aug_);
+    weights_(0) = weight_0;
+    for (int i=1; i<n_sigma_; ++i) {   
+      weights_(i) = 0.5/(lambda_+n_aug_);
+    } 
 
 }
 
@@ -328,13 +335,6 @@ void UKF::SigmaPointPrediction(MatrixXd& Xsig_aug, double delta_t) {
 
 
 void UKF::PredictMeanAndCovariance() {
-    // set weights and these weights will be shared during update
-    weights_(0) = lambda_ / (lambda_ + n_aug_);
-    for (int i = 1; i < 2 * n_aug_ + 1; i++) {  //2n+1 weights
-        double weight = 0.5 / (lambda_ + n_aug_);
-        weights_(i) = weight;
-    }
-
     //predicted state mean
     x_.fill(0.0);
     //iterate over sigma points
