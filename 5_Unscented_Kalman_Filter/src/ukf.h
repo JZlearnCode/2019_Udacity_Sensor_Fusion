@@ -29,9 +29,10 @@ public:
     /**
      * Prediction Predicts sigma points, the state, and the state covariance
      * matrix
-     * @param dt Time between k and k+1 in s
+     * @param delta_t Time between k and k+1 in s
      */
-    void Prediction(double dt);
+    //DONE: JIN
+    void Prediction(long delta_t);
 
     void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_out);
     void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double dt);
@@ -88,6 +89,9 @@ public:
 
     // Augmented state dimension
     int n_aug_;
+
+    // Number of sigma points
+    int n_sigma_; 
 
     // Sigma point spreading parameter
     double lambda_;
