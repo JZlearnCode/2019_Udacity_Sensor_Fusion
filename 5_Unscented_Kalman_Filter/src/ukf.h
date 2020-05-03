@@ -121,4 +121,9 @@ private:
     //measurement noise covariance matrix
     Eigen::MatrixXd R_laser_, R_radar_;
 
+    // if difference in time between two measurements 
+    // is too large, subdivide the prediction step is needed for stability
+    double dt_threshold_; 
+    double default_dt_; 
+
 };

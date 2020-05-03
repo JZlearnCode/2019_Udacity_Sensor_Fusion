@@ -88,6 +88,11 @@ UKF::UKF() {
 
     previous_timestamp_ = 0;
 
+    // if difference in time between two measurements 
+    // is too large, subdivide the prediction step is needed for stability
+    dt_threshold_ = 0.1; 
+    default_dt_ = 0.05; 
+
 }
 
 void UKF::Initialize(const MeasurementPackage& meas_package)  {
@@ -115,10 +120,7 @@ void UKF::Initialize(const MeasurementPackage& meas_package)  {
   return;
 }
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-    /**
-     * TODO: Complete this function! Make sure you switch between LiDAR and radar
-     * measurements.
-     */
+    // [  DONE JIN
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR && !use_radar_) {
         return;
     }
@@ -126,37 +128,21 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
         return;
     }
 
-    /*****************************************************************************
-     *  Initialization
-     ****************************************************************************/
     if (!is_initialized_) {
         Initialize(meas_package);
         return; 
     }
 
-    /*****************************************************************************
-     * Prediction
-     * Update the state transition matrix F according to the new elapsed time. Time is measured in seconds.
-     * Update the process noise covariance matrix.
-     ****************************************************************************/
-
-    //compute the time elapsed between the current and previous measurements, dt - expressed in seconds
-    auto dt = static_cast<double>((meas_package.timestamp_ - previous_timestamp_) * 1e-6);
-
+    long dt = (meas_package.timestamp_ - previous_timestamp_) * 1e-6;
     previous_timestamp_ = meas_package.timestamp_;
 
-    // TODO: plot NIS
-    // TODO: compare the converge rate with/without radar
-
-
-    // Improve the stability by subdividing the prediction step for large delta_t’s into incremental updates
-    // Otherwise Cholesky decomposition may fail
-    while (dt > 0.1) {
-        constexpr double delta_t = 0.05;
-        Prediction(delta_t);
-        dt -= delta_t;
+    // use smaller timestamp to improve stability
+    while (dt > dt_threshold_) {
+      Prediction(default_dt_);
+      dt = dt - default_dt_; 
     }
     Prediction(dt);
+    // DONE JIN    ]  
 
     /*****************************************************************************
      * Update
