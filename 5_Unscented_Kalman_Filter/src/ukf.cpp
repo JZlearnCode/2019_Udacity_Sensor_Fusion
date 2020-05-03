@@ -20,7 +20,7 @@ UKF::UKF() {
     std_yawdd_ = 1.0;
 
     // Define values close to zero 
-    near_zero_value_ = 0.00001;
+    near_zero_value_ = 1e-5;
 
     // Laser measurement noise standard deviation position1 in m
     std_las_px_ = 0.15;
@@ -289,6 +289,7 @@ void UKF::SigmaPointPrediction(MatrixXd& Xsig_aug, double delta_t) {
         px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
         py_p = p_y + v/yawd * ( cos(yaw) - cos(yaw+yawd*delta_t) );
     } else {
+        // When yawd close to zero, treat as drive in straight line
         px_p = p_x + v*delta_t*cos(yaw);
         py_p = p_y + v*delta_t*sin(yaw);
     }
@@ -316,7 +317,7 @@ void UKF::SigmaPointPrediction(MatrixXd& Xsig_aug, double delta_t) {
 
 
 void UKF::PredictMeanAndCovariance() {
-    // predicted state mean
+  // predicted state mean
   x_.fill(0.0);
   for (int i = 0; i < n_sigma_; ++i) {  // iterate over sigma points
     x_ = x_ + weights_(i) * Xsig_pred_.col(i);

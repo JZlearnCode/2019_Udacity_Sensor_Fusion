@@ -41,28 +41,49 @@ public:
      */
     void Prediction(double delta_t);
 
-    /*
-    * Generate augmented sigma points 
-    * output : Xsig_aug  (n_aug_, 2 * n_aug_ + 1)
-    * MatrixXd Xsig_aug = MatrixXd(n_aug_, n_sigma_);
-    * @param Xsig_aug augmented sigma points   (n_aug_, 2 * n_aug_ + 1)
+    /**
+    * Augmented sigma points consists of state vector
+    * and noise vector  
+    * @param Xsig_aug augmented sigma points   
     */
     void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_aug);
 
-    /*
-    * Generate augmented sigma points 
-    * output : Xsig_aug  (n_aug_, 2 * n_aug_ + 1)
-    * MatrixXd Xsig_aug = MatrixXd(n_aug_, n_sigma_);
-    * @param Xsig_aug augmented sigma points   (n_aug_, 2 * n_aug_ + 1)
+    /**
+    * Each sigma point representing augmented state vector
+    * from timestep t is processed using CVRT model
+    * to obtain sigma point for timestep t
+    * @param Xsig_aug augmented sigma points   
     */
     void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double ddelta_t);
+
+    /**
+    * Calculate mean and covariance matrix of the predicted state
+    * uising the predicted sigma points from SigmaPointPrediction
+    * @param meas_package The latest measurement data of either radar or laser
+    */
     void PredictMeanAndCovariance();
     
+    /**
+    * Initialize tehe sigmapoints for measurement state 
+    * @param meas_package The latest measurement data of either radar or laser
+    */
     void InitializeMeasurement(MeasurementPackage meas_package);
+
+    /**
+    * Transform sigma points from sate space into measurement state
+    * for Radar 
+    */
     void PredictRadarMeasurement();
+
+    /**
+    * Transform sigma points from sate space into measurement state
+    * for Lidar  
+    */
     void PredictLidarMeasurement();
 
-
+    /**
+    * Update state mean and covariance for timestep t+1  
+    */
     void UpdateState(const Eigen::VectorXd& z);
 
 
@@ -120,12 +141,6 @@ public:
     // Sigma point spreading parameter
     double lambda_;
 
-    // current NIS for radar
-    double NIS_radar_;
-
-    // current NIS for laser
-    double NIS_laser_;
-
 private:
     // previous timestamp
     double previous_timestamp_;
@@ -145,14 +160,14 @@ private:
     //measurement noise covariance matrix
     Eigen::MatrixXd R_lidar_, R_radar_;
 
-    // if difference in time between two measurements 
-    // is too large, subdivide the prediction step is needed for stability
+    // if difference in time between two measurements is too large, 
+    // subdivide the prediction step is needed for stability
     double dt_threshold_; 
     double default_dt_; 
     //radar can measure r, phi, and r_dot
-    int n_z_radar_ = 3;
+    int n_z_radar_;
     //lidar measures position x,y 
-    int n_z_lidar_ = 2; 
+    int n_z_lidar_; 
 
     // A value representing small value near zero 
     double near_zero_value_;
