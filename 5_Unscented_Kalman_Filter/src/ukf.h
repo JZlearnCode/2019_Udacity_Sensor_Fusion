@@ -24,6 +24,7 @@ public:
      * ProcessMeasurement
      * @param meas_package The latest measurement data of either radar or laser
      */
+    //DONE: JIN
     void ProcessMeasurement(MeasurementPackage meas_package);
 
     //DONE:JIN
@@ -36,6 +37,7 @@ public:
     //DONE: JIN
     void Prediction(long delta_t);
 
+    //DONE: JIN
     void GenerateAugmentedSigmaPoints(Eigen::MatrixXd& Xsig_out);
     void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double dt);
     void PredictMeanAndCovariance();
