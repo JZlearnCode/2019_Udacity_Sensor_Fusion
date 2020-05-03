@@ -148,56 +148,59 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
 }
 
-void UKF::PredictSensorMeasurement(MeasurementPackage meas_package) {
+void UKF::InitializeMeasurement(MeasurementPackage meas_package) {  
   if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
-        //set measurement dimension, radar can measure r, phi, and r_dot
-        n_z_ = 3;
-    }
-    else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
-        //set measurement dimension, laser can measure px, py
-        n_z_ = 2;
-    }
+    //set measurement dimension, radar can measure r, phi, and r_dot
+    n_z_ = n_z_radar_;
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    //set measurement dimension, laser can measure px, py
+    n_z_ = n_z_lidar_;
+  }
 
-    //create matrix for sigma points in measurement space
-    Zsig_ = MatrixXd::Zero(n_z_, 2 * n_aug_ + 1);
+  //create matrix for sigma points in measurement space
+  Zsig_ = MatrixXd::Zero(n_z_, 2 * n_aug_ + 1);
 
-    //mean predicted measurement
-    z_pred_ = VectorXd::Zero(n_z_);
+  //mean predicted measurement
+  z_pred_ = VectorXd::Zero(n_z_);
 
-    //measurement covariance matrix S
-    S_ = MatrixXd::Zero(n_z_, n_z_);
+  //measurement covariance matrix S
+  S_ = MatrixXd::Zero(n_z_, n_z_);
+}
 
+void UKF::PredictSensorMeasurement(MeasurementPackage meas_package) {
+  InitializeMeasurement(meas_package);
 
-    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
-      PredictRadarMeasurement();
-    }
-    else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
-      PredictLidarMeasurement();
-    }
-    // mean predicted measurement
-    z_pred_.fill(0.0);
-    for (int i=0; i < n_sigma_; ++i) {
-      z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
-    }
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    PredictRadarMeasurement();
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    PredictLidarMeasurement();
+  }
+  // mean predicted measurement
+  z_pred_.fill(0.0);
+  for (int i=0; i < n_sigma_; ++i) {
+    z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
+  }
 
-    // predicted measurement covariance 
-    S_.fill(0.0);
-    for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
-      // residual
-      VectorXd z_diff = Zsig_.col(i) - z_pred_;
+  // predicted measurement covariance 
+  S_.fill(0.0);
+  for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+    // residual
+    VectorXd z_diff = Zsig_.col(i) - z_pred_;
 
-      // angle normalization  [0, 360] --> [-180, 180]
-      // radar state [range,   bearing,  radial velocity]
-      while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-      while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+    // angle normalization  [0, 360] --> [-180, 180]
+    // radar state [range,   bearing,  radial velocity]
+    while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+    while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
 
-      S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
-    }
-    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
-      S_ = S_ + R_radar_;
-    } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
-      S_ = S_ + R_lidar_;
-    }
+    S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
+  }
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    S_ = S_ + R_radar_;
+  } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    S_ = S_ + R_lidar_;
+  }
 }
 
 void UKF::PredictLidarMeasurement() {
@@ -348,90 +351,6 @@ void UKF::PredictMeanAndCovariance() {
         P_ += weights_(i) * x_diff * x_diff.transpose() ;
     }
 }
-
-
-// void UKF::PredictRadarMeasurement() {
-//     //transform sigma points into measurement space
-//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
-
-//         // extract values for better readability
-//         double p_x = Xsig_pred_(0,i);
-//         double p_y = Xsig_pred_(1,i);
-//         double v   = Xsig_pred_(2,i);
-//         double yaw = Xsig_pred_(3,i);
-
-//         double v1 = cos(yaw)*v;
-//         double v2 = sin(yaw)*v;
-
-//         // measurement model
-//         Zsig_(0,i) = sqrt(p_x*p_x  +  p_y*p_y);                   //r
-//         Zsig_(1,i) = atan2(p_y, p_x);                            //phi
-
-//         if (Zsig_(0, i) < 0.001) {
-//             Zsig_(2, i) = (p_x * v1 + p_y * v2) / 0.001;        //r_dot
-//         }
-//         else {
-//             Zsig_(2, i) = (p_x * v1 + p_y * v2) / Zsig_(0, i);  //r_dot;
-//         }
-//     }
-
-//     z_pred_.fill(0.0);
-//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-//         z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
-//     }
-
-//     S_.fill(0.0);
-//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
-//         //residual
-//         VectorXd z_diff = Zsig_.col(i) - z_pred_;
-
-//         //angle normalization
-//         while (z_diff(1) > M_PI) {
-//             z_diff(1) -= 2.*M_PI;
-//         }
-//         while (z_diff(1) <- M_PI) {
-//             z_diff(1) += 2.*M_PI;
-//         }
-
-//         S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
-//     }
-
-//     S_ = S_ + R_radar_;
-// }
-
-// void UKF::PredictLaserMeasurement() {
-//     //transform sigma points into measurement space
-//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
-//         // measurement model
-//         Zsig_(0,i) = Xsig_pred_(0,i);           //px
-//         Zsig_(1,i) = Xsig_pred_(1,i);           //py
-//     }
-
-//     z_pred_.fill(0.0);
-//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-//         z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
-//     }
-
-
-//     S_.fill(0.0);
-//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
-//         //residual
-//         VectorXd z_diff = Zsig_.col(i) - z_pred_;
-
-//         //angle normalization
-//         while (z_diff(1) > M_PI) {
-//             z_diff(1) -= 2.*M_PI;
-//         }
-//         while (z_diff(1) < -M_PI) {
-//             z_diff(1) += 2.*M_PI;
-//         }
-
-//         S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
-//     }
-
-//     S_ = S_ + R_laser_;
-// }
-
 
 void UKF::UpdateState(const VectorXd& z) {
     //create matrix for cross correlation Tc
