@@ -38,7 +38,7 @@ public:
     void SigmaPointPrediction(Eigen::MatrixXd& Xsig_aug, double dt);
     void PredictMeanAndCovariance();
     void PredictRadarMeasurement();
-    void PredictLaserMeasurement();
+    void PredictLidarMeasurement();
     void UpdateState(const Eigen::VectorXd& z);
 
 
@@ -119,7 +119,7 @@ private:
     Eigen::MatrixXd S_;
 
     //measurement noise covariance matrix
-    Eigen::MatrixXd R_laser_, R_radar_;
+    Eigen::MatrixXd R_lidar_, R_radar_;
 
     // if difference in time between two measurements 
     // is too large, subdivide the prediction step is needed for stability

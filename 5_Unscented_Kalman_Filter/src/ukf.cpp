@@ -80,8 +80,8 @@ UKF::UKF() {
                     0                    , std_radphi_ * std_radphi_ , 0,
                     0                    , 0                         , std_radrd_*std_radrd_;
 
-    R_laser_ = MatrixXd::Zero(2, 2);
-    R_laser_ <<     std_laspx_ * std_laspx_, 0 ,
+    R_lidar_ = MatrixXd::Zero(2, 2);
+    R_lidar_ <<     std_laspx_ * std_laspx_, 0 ,
                     0                      , std_laspy_ * std_laspy_ ;
     previous_timestamp_ = 0;
 
@@ -168,12 +168,65 @@ void UKF::PredictSensorMeasurement(MeasurementPackage meas_package) {
 
 
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
-        PredictRadarMeasurement();
+      PredictRadarMeasurement();
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
-        PredictLaserMeasurement();
+      PredictLidarMeasurement();
+    }
+    // mean predicted measurement
+    z_pred_.fill(0.0);
+    for (int i=0; i < n_sigma_; ++i) {
+      z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
+    }
+
+    // predicted measurement covariance 
+    S_.fill(0.0);
+    for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+      // residual
+      VectorXd z_diff = Zsig_.col(i) - z_pred_;
+
+      // angle normalization  [0, 360] --> [-180, 180]
+      // radar state [range,   bearing,  radial velocity]
+      while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
+      while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+
+      S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
+    }
+    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+      S_ = S_ + R_radar_;
+    } else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+      S_ = S_ + R_lidar_;
     }
 }
+
+void UKF::PredictLidarMeasurement() {
+  // transform sigma points into measurement space
+  for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+    // measurement model
+    Zsig_(0,i) = Xsig_pred_(0,i); //px  
+    Zsig_(1,i) = Xsig_pred_(1,i); //py
+  }
+}
+
+void UKF::PredictRadarMeasurement() {
+  // transform sigma points into measurement space
+  for (int i = 0; i < n_sigma_; ++i) {  // 2n+1 simga points
+    // extract values for better readability
+    double p_x = Xsig_pred_(0,i);
+    double p_y = Xsig_pred_(1,i);
+    double v  = Xsig_pred_(2,i);
+    double yaw = Xsig_pred_(3,i);
+
+    double v_x = cos(yaw)*v;
+    double v_y = sin(yaw)*v;
+
+    // measurement model
+    Zsig_(0,i) = sqrt(p_x*p_x + p_y*p_y);                       // r
+    Zsig_(1,i) = atan2(p_y,p_x);                                // phi
+    Zsig_(2,i) = (p_x*v_x + p_y*v_y) / sqrt(p_x*p_x + p_y*p_y);   // r_dot
+  }
+}
+
 void UKF::Prediction(long delta_t) {
   /**
    * Estimate the object's location. 
@@ -296,87 +349,87 @@ void UKF::PredictMeanAndCovariance() {
 }
 
 
-void UKF::PredictRadarMeasurement() {
-    //transform sigma points into measurement space
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
+// void UKF::PredictRadarMeasurement() {
+//     //transform sigma points into measurement space
+//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
 
-        // extract values for better readability
-        double p_x = Xsig_pred_(0,i);
-        double p_y = Xsig_pred_(1,i);
-        double v   = Xsig_pred_(2,i);
-        double yaw = Xsig_pred_(3,i);
+//         // extract values for better readability
+//         double p_x = Xsig_pred_(0,i);
+//         double p_y = Xsig_pred_(1,i);
+//         double v   = Xsig_pred_(2,i);
+//         double yaw = Xsig_pred_(3,i);
 
-        double v1 = cos(yaw)*v;
-        double v2 = sin(yaw)*v;
+//         double v1 = cos(yaw)*v;
+//         double v2 = sin(yaw)*v;
 
-        // measurement model
-        Zsig_(0,i) = sqrt(p_x*p_x  +  p_y*p_y);                   //r
-        Zsig_(1,i) = atan2(p_y, p_x);                            //phi
+//         // measurement model
+//         Zsig_(0,i) = sqrt(p_x*p_x  +  p_y*p_y);                   //r
+//         Zsig_(1,i) = atan2(p_y, p_x);                            //phi
 
-        if (Zsig_(0, i) < 0.001) {
-            Zsig_(2, i) = (p_x * v1 + p_y * v2) / 0.001;        //r_dot
-        }
-        else {
-            Zsig_(2, i) = (p_x * v1 + p_y * v2) / Zsig_(0, i);  //r_dot;
-        }
-    }
+//         if (Zsig_(0, i) < 0.001) {
+//             Zsig_(2, i) = (p_x * v1 + p_y * v2) / 0.001;        //r_dot
+//         }
+//         else {
+//             Zsig_(2, i) = (p_x * v1 + p_y * v2) / Zsig_(0, i);  //r_dot;
+//         }
+//     }
 
-    z_pred_.fill(0.0);
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-        z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
-    }
+//     z_pred_.fill(0.0);
+//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+//         z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
+//     }
 
-    S_.fill(0.0);
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
-        //residual
-        VectorXd z_diff = Zsig_.col(i) - z_pred_;
+//     S_.fill(0.0);
+//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
+//         //residual
+//         VectorXd z_diff = Zsig_.col(i) - z_pred_;
 
-        //angle normalization
-        while (z_diff(1) > M_PI) {
-            z_diff(1) -= 2.*M_PI;
-        }
-        while (z_diff(1) <- M_PI) {
-            z_diff(1) += 2.*M_PI;
-        }
+//         //angle normalization
+//         while (z_diff(1) > M_PI) {
+//             z_diff(1) -= 2.*M_PI;
+//         }
+//         while (z_diff(1) <- M_PI) {
+//             z_diff(1) += 2.*M_PI;
+//         }
 
-        S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
-    }
+//         S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
+//     }
 
-    S_ = S_ + R_radar_;
-}
+//     S_ = S_ + R_radar_;
+// }
 
-void UKF::PredictLaserMeasurement() {
-    //transform sigma points into measurement space
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
-        // measurement model
-        Zsig_(0,i) = Xsig_pred_(0,i);           //px
-        Zsig_(1,i) = Xsig_pred_(1,i);           //py
-    }
+// void UKF::PredictLaserMeasurement() {
+//     //transform sigma points into measurement space
+//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
+//         // measurement model
+//         Zsig_(0,i) = Xsig_pred_(0,i);           //px
+//         Zsig_(1,i) = Xsig_pred_(1,i);           //py
+//     }
 
-    z_pred_.fill(0.0);
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-        z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
-    }
+//     z_pred_.fill(0.0);
+//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+//         z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
+//     }
 
 
-    S_.fill(0.0);
-    for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
-        //residual
-        VectorXd z_diff = Zsig_.col(i) - z_pred_;
+//     S_.fill(0.0);
+//     for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 sigma points
+//         //residual
+//         VectorXd z_diff = Zsig_.col(i) - z_pred_;
 
-        //angle normalization
-        while (z_diff(1) > M_PI) {
-            z_diff(1) -= 2.*M_PI;
-        }
-        while (z_diff(1) < -M_PI) {
-            z_diff(1) += 2.*M_PI;
-        }
+//         //angle normalization
+//         while (z_diff(1) > M_PI) {
+//             z_diff(1) -= 2.*M_PI;
+//         }
+//         while (z_diff(1) < -M_PI) {
+//             z_diff(1) += 2.*M_PI;
+//         }
 
-        S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
-    }
+//         S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
+//     }
 
-    S_ = S_ + R_laser_;
-}
+//     S_ = S_ + R_laser_;
+// }
 
 
 void UKF::UpdateState(const VectorXd& z) {
