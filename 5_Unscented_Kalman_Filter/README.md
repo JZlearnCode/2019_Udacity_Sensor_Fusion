@@ -1,6 +1,7 @@
 # SFND_Unscented_Kalman_Filter
 
-This project implements an Unscented Kalman Filter to estimate the state of multiple cars on a highway using noisy lidar and radar measurements.
+This project implements an Unscented Kalman Filter to estimate the state of multiple cars on a highway using noisy lidar and radar measurements. Details
+on the result and the implementation are below. 
 
 <img src="media/13_pipeline_workflow.png"/> 
 
